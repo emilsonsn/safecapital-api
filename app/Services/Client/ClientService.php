@@ -52,10 +52,11 @@ class ClientService
                 'state' => ['required', 'string', 'max:255'],
                 'attachments' => ['nullable', 'array'],
             ];
+            $userId = Auth::user()->id;
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = Auth::user()->id;
+            $requestData['user_id'] = $userId;
 
             $validator = Validator::make($requestData, $rules);
 
@@ -67,12 +68,14 @@ class ClientService
 
             if($request->filled('attachments')){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment->store('attachments');
+                    $path = $attachment['file']->store('attachments');
                     ClientAttachment::firstOrCreate([
-                        'id' => $attachment->getClientOriginalName(),
+                        'id' => $attachment['id'] ?? null,
                     ], [
+                        'category' => $attachment['category'],
+                        'filename' => $attachment['file']->getClientOriginalName(),
                         'path' => $path,
-                        'user_id' => auth()->id(),
+                        'client_id' => $client->id,
                     ]);
                 }
             }
@@ -99,7 +102,7 @@ class ClientService
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
                 'attachments' => ['nullable', 'array'],             
-            ];
+            ];            
 
             $requestData = $request->all();
 
@@ -117,12 +120,14 @@ class ClientService
 
             if($request->filled('attachments')){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment->store('attachments');
+                    $path = $attachment['file']->store('attachments');
                     ClientAttachment::firstOrCreate([
-                        'id' => $attachment->getClientOriginalName(),
+                        'id' => $attachment['id'] ?? null,
                     ], [
+                        'category' => $attachment['category'],
+                        'filename' => $attachment['file']->getClientOriginalName(),
                         'path' => $path,
-                        'user_id' => auth()->id(),
+                        'client_id' => $clientToUpdate->id,
                     ]);
                 }
             }

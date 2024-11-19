@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecoveryMail;
 use App\Mail\WelcomeMail;
 use App\Models\UserAttachment;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -33,12 +34,17 @@ class UserService
         try {
             $perPage = $request->input('take', 10);
             $search_term = $request->search_term;
+            $role = $request->role;
 
             $users = User::query();
 
             if(isset($search_term)){
                 $users->where('name', 'LIKE', "%{$search_term}%")
                     ->orWhere('email', 'LIKE', "%{$search_term}%");
+            }
+
+            if(isset($role)){
+                $users->where('role', $role);
             }
 
             $users = $users->paginate($perPage);
@@ -129,8 +135,10 @@ class UserService
                     UserAttachment::firstOrCreate([
                         'id' => $attachment->getClientOriginalName(),
                     ], [
+                        'category' => $attachment['category'],
+                        'filename' => $attachment['file']->getClientOriginalName(),
                         'path' => $path,
-                        'user_id' => auth()->id(),
+                        'user_id' => Auth::user()->id,
                     ]);
                 }
             }
@@ -141,7 +149,7 @@ class UserService
         }
     }
     
-    public function update($request, $user_id)
+    public function update($request, $id)
     {
         try {
             $request['is_active'] = $request['is_active'] == 'true' ? true : false;
@@ -164,7 +172,7 @@ class UserService
 
             if ($validator->fails()) throw new Exception($validator->errors());
 
-            $userToUpdate = User::find($user_id);
+            $userToUpdate = User::find($id);
 
             if(!isset($userToUpdate)) throw new Exception('Usuário não encontrado');
 
@@ -178,8 +186,10 @@ class UserService
                     UserAttachment::firstOrCreate([
                         'id' => $attachment->getClientOriginalName(),
                     ], [
+                        'category' => $attachment['category'],
+                        'filename' => $attachment['file']->getClientOriginalName(),
                         'path' => $path,
-                        'user_id' => auth()->id(),
+                        'user_id' => Auth::user()->id,
                     ]);
                 }
             }
