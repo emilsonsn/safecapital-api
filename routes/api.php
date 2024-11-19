@@ -26,6 +26,11 @@ Route::post('updatePassword', [UserController::class, 'updatePassword']);
 
 Route::get('validateToken', [AuthController::class, 'validateToken']);
 
+
+Route::prefix('user')->group(function(){
+    Route::post('create', [UserController::class, 'create']);
+});
+
 Route::middleware('jwt')->group(function(){
 
     Route::middleware(AdminMiddleware::class)->group(function() {
@@ -40,7 +45,6 @@ Route::middleware('jwt')->group(function(){
         Route::get('cards', [UserController::class, 'cards']);
         Route::get('me', [UserController::class, 'getUser']);
         Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);
-        Route::post('create', [UserController::class, 'create']);
         Route::patch('{id}', [UserController::class, 'update']);
         Route::post('block/{id}', [UserController::class, 'userBlock']);
     });
