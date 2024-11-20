@@ -39,6 +39,8 @@ class UserService
             $perPage = $request->input('take', 10);
             $search_term = $request->search_term;
             $role = $request->role;
+            $status = $request->status;
+            $validation = $request->validation;
 
             $users = User::query();
 
@@ -49,6 +51,14 @@ class UserService
 
             if(isset($role)){
                 $users->where('role', $role);
+            }
+
+            if(isset($status)){
+                $users->where('status', $status);
+            }
+
+            if(isset($validation)){
+                $users->where('validation', $validation);
             }
 
             $users = $users->paginate($perPage);
@@ -234,6 +244,7 @@ class UserService
             if($request->validation == UserValidationEnum::Accepted->value){
                 $password = Str::random(20);
                 $userToUpdate->password = Hash::make($password);
+                $userToUpdate->is_active = true;
                 $userToUpdate->save();
                 Mail::to($userToUpdate->email)
                     ->send(new ValidationAcceptedMail($userToUpdate->name, $userToUpdate->email, $password));
