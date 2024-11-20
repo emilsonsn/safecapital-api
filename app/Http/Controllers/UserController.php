@@ -51,6 +51,14 @@ class UserController extends Controller
         return $this->response($result);
     }
 
+
+    public function validation(Request $request, $id){
+        $result = $this->userService->validate($request, $id);
+
+        if($result['status']) $result['message'] = "Usuário validado com sucesso";
+        return $this->response($result);
+    }
+
     public function deleteAttachment($id){
         $result = $this->userService->deleteAttachment($id);
 

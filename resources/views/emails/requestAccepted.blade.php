@@ -57,12 +57,16 @@
 
 <body>
     <div class="email-container">
-        <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem?</h1>
-        <p>Recebemos sua solicitação de cadastro e iremos avaliar os dados e documentos inseridos.</p>
-        <p>Em breve você vocẽ receberá outro email com a resposta da validação. Esse processo pode levar até 3 dias.</p>
-        
+        <h1>Seja bem-vindo, <strong>{{ $name }}</strong>! Sua solicitação de cadastro foi aceita!</h1>
+        <p>Agora você já pode acessar seu ambiente no nosso sistema.</p>
+        <p>Segue suas credenciais de acesso:</p>
+        <ul>
+            <li><strong>Email:</strong> {{ $email }}</li>
+            <li><strong>Senha:</strong> {{ $password }}</li>
+            <li><strong>Link para o sistema:</strong> <a href="{{ env('APP_URL') }}">{{ env('APP_URL') }}</a></li>
+        </ul>
         <div class="footer">
-            <p>© {{ date('Y') }} {{ env('APP_NAME') }}. Todos os direitos reservados.</p>
+            <p>© {{ date('Y') }} {{ config('app.name') }}. Todos os direitos reservados.</p>
         </div>
     </div>
 </body>

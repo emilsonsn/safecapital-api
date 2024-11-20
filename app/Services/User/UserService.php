@@ -2,12 +2,16 @@
 
 namespace App\Services\User;
 
+use App\Enums\UserRoleEnum;
+use App\Enums\UserValidationEnum;
 use App\Models\PasswordRecovery;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecoveryMail;
+use App\Mail\ValidationAcceptedMail;
+use App\Mail\ValidationRefusedMail;
 use App\Mail\WelcomeMail;
 use App\Models\UserAttachment;
 use Illuminate\Support\Facades\Auth;
@@ -142,6 +146,10 @@ class UserService
                     ]);
                 }
             }
+
+            if ($request->role == UserRoleEnum::Client->value) {
+                Mail::to($user->email)->send(new WelcomeMail($user->name));
+            }
     
             return ['status' => true, 'data' => $user];
         } catch (Exception $error) {
@@ -192,6 +200,46 @@ class UserService
                         'user_id' => Auth::user()->id,
                     ]);
                 }
+            }
+
+            return ['status' => true, 'data' => $userToUpdate];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
+    public function validate($request, $id)
+    {
+        try {
+
+            $rules = [
+                'validation' => ['required', 'string', 'in:Pending,Accepted,Refused'],
+                'justification' => ['nullable', 'string', 'max:1000'],
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) throw new Exception($validator->errors());
+
+            $userToUpdate = User::find($id);
+
+            if(!isset($userToUpdate)) throw new Exception('Usuário não encontrado');
+
+            $requestData = $validator->validated();                   
+
+            $userToUpdate->update($requestData);
+
+            if($request->validation == UserValidationEnum::Accepted->value){
+                $password = Str::random(20);
+                $userToUpdate->password = Hash::make($password);
+                $userToUpdate->save();
+                Mail::to($userToUpdate->email)
+                    ->send(new ValidationAcceptedMail($userToUpdate->name, $userToUpdate->email, $password));
+            }
+
+            if($request->validation == UserValidationEnum::Refused->value){                
+                Mail::to($userToUpdate->email)
+                ->send(new ValidationRefusedMail($userToUpdate->name, $request->justification));
             }
 
             return ['status' => true, 'data' => $userToUpdate];

@@ -34,6 +34,7 @@ class User extends Authenticatable implements JWTSubject
         'cnpj',
         'creci',
         'is_active',
+        'validation',
         'role',
     ];
 

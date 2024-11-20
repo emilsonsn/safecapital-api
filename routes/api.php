@@ -44,7 +44,8 @@ Route::middleware('jwt')->group(function(){
         Route::get('search', [UserController::class, 'search']);
         Route::get('cards', [UserController::class, 'cards']);
         Route::get('me', [UserController::class, 'getUser']);
-        Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);
+        Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);        
+        Route::patch('validation/{id}', [UserController::class, 'validation']);
         Route::patch('{id}', [UserController::class, 'update']);
         Route::post('block/{id}', [UserController::class, 'userBlock']);
     });

@@ -6,19 +6,20 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class WelcomeMail extends Mailable
+class ValidationRefusedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $name;
-
+    public $justification;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($name)
+    public function __construct($name, $justification)
     {
         $this->name = $name;
+        $this->justification = $justification;
     }
 
     /**
@@ -27,11 +28,12 @@ class WelcomeMail extends Mailable
     
     public function build()
     {
-        return $this->view('emails.welcome')
+        return $this->view('emails.requestRefused')
                     ->with([
                         'name' => $this->name,
+                        'justification' => $this->justification,
                     ])
-                    ->subject('Pedido de cadastro em análise');
+                    ->subject('Solicitação de cadastro reprovada');
     }
 
 }
