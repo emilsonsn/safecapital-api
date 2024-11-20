@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AdminMiddleware;
 
@@ -48,6 +49,14 @@ Route::middleware('jwt')->group(function(){
         Route::patch('validation/{id}', [UserController::class, 'validation']);
         Route::patch('{id}', [UserController::class, 'update']);
         Route::post('block/{id}', [UserController::class, 'userBlock']);
+    });
+
+    Route::prefix('solicitation')->group(function(){
+        Route::get('search', [SolicitationController::class, 'search']);
+        Route::post('create', [SolicitationController::class, 'create']);
+        Route::patch('{id}', [SolicitationController::class, 'update']);
+        Route::delete('create-message', [SolicitationController::class, 'createMessage']);
+        Route::delete('{id}', [SolicitationController::class, 'delete']);        
     });
 
     Route::prefix('client')->group(function(){
