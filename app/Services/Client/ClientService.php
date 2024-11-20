@@ -69,7 +69,7 @@ class ClientService
                 throw new Exception($validator->errors(), 400);
             }
 
-            $client = Client::create($validator->validated());
+            $client = Client::create($requestData);
 
             if($request->filled('attachments')){
                 foreach($request->attachments as $attachment){
