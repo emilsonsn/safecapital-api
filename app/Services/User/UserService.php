@@ -50,15 +50,18 @@ class UserService
             }
 
             if(isset($role)){
-                $users->where('role', $role);
+                $roles = explode(',' ,$role);
+                $users->whereIn('role', $roles);
             }
 
             if(isset($status)){
-                $users->where('status', $status);
+                $status = explode(',' ,$status);
+                $users->whereIn('status', $status);
             }
 
             if(isset($validation)){
-                $users->where('validation', $validation);
+                $validations = explode(',' ,$validation);
+                $users->whereIn('validation', $validations);
             }
 
             $users = $users->paginate($perPage);
