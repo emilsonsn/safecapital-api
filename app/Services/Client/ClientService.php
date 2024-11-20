@@ -16,6 +16,7 @@ class ClientService
         try {
             $perPage = $request->input('take', 10);
             $search_term = $request->search_term;
+            $status = $request->status;
 
             $clients = Client::orderBy('id', 'desc');
 
@@ -25,6 +26,10 @@ class ClientService
                     ->orWhere('cpf', 'LIKE', "%{$search_term}%")
                     ->orWhere('email', 'LIKE', "%{$search_term}%")
                     ->orWhere('phone', 'LIKE', "%{$search_term}%");
+            }
+
+            if(isset($status)){
+                $clients->where('status', $status);
             }
 
             $clients = $clients->paginate($perPage);

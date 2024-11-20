@@ -27,6 +27,7 @@ class Client extends Model
         'neighborhood',
         'city',
         'state',
+        'status',
         'user_id',
     ];
 
