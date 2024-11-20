@@ -22,6 +22,11 @@ class ClientAttachment extends Model
         'client_id',
     ];
 
+    public function getPathAttribute($value)
+    {
+        return $value ? asset('storage/' . $value) : null;
+    }
+    
     public function client(){
         return $this->belongsTo(Client::class);
     }

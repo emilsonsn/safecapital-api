@@ -66,14 +66,14 @@ class ClientService
             $validator = Validator::make($requestData, $rules);
 
             if ($validator->fails()) {
-                return ['status' => false, 'error' => $validator->errors(), 'statusCode' => 400];;
+                throw new Exception($validator->errors(), 400);
             }
 
             $client = Client::create($validator->validated());
 
             if($request->filled('attachments')){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment['file']->store('attachments');
+                    $path = $attachment['file']->store('attachments', 'public');
                     ClientAttachment::firstOrCreate([
                         'id' => $attachment['id'] ?? null,
                     ], [
@@ -115,7 +115,9 @@ class ClientService
 
             $validator = Validator::make($requestData, $rules);
 
-            if ($validator->fails()) throw new Exception($validator->errors());
+            if ($validator->fails()) {
+                throw new Exception($validator->errors(), 400);
+            }
 
             $clientToUpdate = Client::find($user_id);
 
@@ -125,7 +127,7 @@ class ClientService
 
             if($request->filled('attachments')){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment['file']->store('attachments');
+                    $path = $attachment['file']->store('attachments', 'public');
                     ClientAttachment::firstOrCreate([
                         'id' => $attachment['id'] ?? null,
                     ], [

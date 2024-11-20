@@ -135,7 +135,7 @@ class UserService
     
             if($request->filled('attachments')){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment->store('attachments');
+                    $path = $attachment->store('attachments', 'public');
                     UserAttachment::firstOrCreate([
                         'id' => $attachment->getClientOriginalName(),
                     ], [
@@ -190,7 +190,7 @@ class UserService
 
             if($request->filled('attachments')){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment->store('attachments');
+                    $path = $attachment->store('attachments', 'public');
                     UserAttachment::firstOrCreate([
                         'id' => $attachment->getClientOriginalName(),
                     ], [
@@ -219,7 +219,9 @@ class UserService
 
             $validator = Validator::make($request->all(), $rules);
 
-            if ($validator->fails()) throw new Exception($validator->errors());
+            if ($validator->fails()) {
+                throw new Exception($validator->errors(), 400);
+            }
 
             $userToUpdate = User::find($id);
 

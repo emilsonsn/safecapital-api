@@ -6,25 +6,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class UserAttachment extends Model
+class SolicitationMessage extends Model
 {
     use HasFactory, SoftDeletes;
 
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    public $table = 'user_attachments';
+    public $table = 'solicitations';
 
     protected $fillable = [
-        'category',
-        'filename',
-        'path',
-        'client_id',
+        'message',
+        'attachment',
+        'solicitation_id',
+        'user_id',
     ];
 
-    public function getPathAttribute($value)
+    public function solicitation(){
+        return $this->belongsTo(Solicitation::class);
+    }
+
+    public function getAttachmentAttribute($attachment)
     {
-        return $value ? asset('storage/' . $value) : null;
+        return $attachment ? asset('storage/' . $attachment) : null;
     }
 
     public function user(){
