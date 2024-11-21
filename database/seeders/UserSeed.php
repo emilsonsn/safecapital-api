@@ -18,16 +18,17 @@ class UserSeed extends Seeder
             'email' => 'admin@admin',
         ],
         [
-            'name' => 'Admin',
+            'name' => 'admin',
+            'surname' => 'do sistema',
+            'phone' => '83991236636',
+            'company_name' => 'TechSoul',
             'email' => 'admin@admin',
             'password' => Hash::make('admin'),
-            'phone' => '83991236636',
-            'whatsapp' => '83991236636',
-            'cpf_cnpj' => '13754674412',
-            'birth_date' => '2001-12-18',
-            'company_position_id' => 1,
-            'sector_id' => null,
+            'cnpj' => '50774377000176',
+            'creci' => null,
             'is_active' => true,
+            'validation' => null,
+            'role' => 'Admin',
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services\User;
 
 use App\Enums\UserRoleEnum;
 use App\Enums\UserValidationEnum;
+use App\Mail\AccountCreated;
 use App\Models\PasswordRecovery;
 use App\Models\User;
 use Exception;
@@ -124,20 +125,17 @@ class UserService
                 'company_name' => ['required', 'string', 'max:255'],
                 'cnpj' => ['required', 'string', 'max:255'],
                 'creci' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'max:255'],
-                'password' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'max:255'],                
                 'is_active' => ['required', 'boolean'],
                 'role' => ['required', 'in:Admin,Manager,Client'],
                 'attachments' => ['nullable', 'array'],
             ];
 
-            if(!isset($request->password)){
-                $password = str_shuffle(Str::upper(Str::random(1)) . rand(0, 9) . Str::random(1, '?!@#$%^&*') . Str::random(5));
-                $requestData['password'] = Hash::make($password);
-            }
-    
             $requestData = $request->all();
-    
+
+            $password = str_shuffle(Str::upper(Str::random(1)) . rand(0, 9) . Str::random(1, '?!@#$%^&*') . Str::random(5));
+            $requestData['password'] = Hash::make($password);
+                
             $validator = Validator::make($requestData, $rules);
     
             if ($validator->fails()) {
@@ -162,6 +160,8 @@ class UserService
 
             if ($request->role == UserRoleEnum::Client->value) {
                 Mail::to($user->email)->send(new WelcomeMail($user->name));
+            }else{
+                Mail::to($user->email)->send(new AccountCreated($user->name, $user->email, $password));
             }
     
             return ['status' => true, 'data' => $user];
