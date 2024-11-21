@@ -152,9 +152,10 @@ class UserService
 
             $user = User::create($requestData);
     
-            if($request->filled('attachments')){
+            if(isset($request->attachments)){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment->store('attachments', 'public');
+                    $attachment = is_array($attachment) ? $attachment : json_decode($attachment, true);
+                    $path = $attachment['file']->store('attachments', 'public');
                     UserAttachment::firstOrCreate([
                         'id' => $attachment->getClientOriginalName(),
                     ], [
@@ -209,9 +210,10 @@ class UserService
 
             $userToUpdate->update($requestData);
 
-            if($request->filled('attachments')){
+            if(isset($request->attachments)){
                 foreach($request->attachments as $attachment){
-                    $path = $attachment->store('attachments', 'public');
+                    $attachment = is_array($attachment) ? $attachment : json_decode($attachment, true);
+                    $path = $attachment['file']->store('attachments', 'public');
                     UserAttachment::firstOrCreate([
                         'id' => $attachment->getClientOriginalName(),
                     ], [
