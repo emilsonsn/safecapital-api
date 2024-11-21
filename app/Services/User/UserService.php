@@ -142,6 +142,14 @@ class UserService
                 throw new Exception($validator->errors(), 400);
             }
 
+            $usersWithEmailOrCnpj = User::where('email', $requestData['email'])
+                ->orWhere('cnpj', $requestData['cnpj'])
+                ->count();
+
+            if($usersWithEmailOrCnpj){
+                throw new Exception('Email ou Cnpj já existem no sistema.', 400);
+            }
+
             $user = User::create($requestData);
     
             if($request->filled('attachments')){
@@ -217,6 +225,21 @@ class UserService
 
             return ['status' => true, 'data' => $userToUpdate];
         } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
+    public function delete($id){
+        try{
+            $user = User::find($id);
+
+            if(!$user) throw new Exception('Usuário não encontrado');
+
+            $userName = $user->name;
+            $user->delete();
+
+            return ['status' => true, 'data' => $userName];
+        }catch(Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
