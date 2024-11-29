@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CreditConfigurationController;
 use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AdminMiddleware;
@@ -58,6 +59,11 @@ Route::middleware('jwt')->group(function(){
         Route::patch('{id}', [SolicitationController::class, 'update']);
         Route::delete('create-message', [SolicitationController::class, 'createMessage']);
         Route::delete('{id}', [SolicitationController::class, 'delete']);        
+    });
+
+    Route::prefix('credit-configuration')->group(function(){
+        Route::get('/', [CreditConfigurationController::class, 'search']);
+        Route::patch('/', [CreditConfigurationController::class, 'update']);       
     });
 
     Route::prefix('client')->group(function(){

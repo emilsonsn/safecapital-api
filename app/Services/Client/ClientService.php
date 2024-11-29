@@ -17,6 +17,7 @@ class ClientService
             $perPage = $request->input('take', 10);
             $search_term = $request->search_term;
             $status = $request->status;
+            $status = $request->user_id;
 
             $clients = Client::orderBy('id', 'desc');
 
@@ -30,6 +31,10 @@ class ClientService
 
             if(isset($status)){
                 $clients->where('status', $status);
+            }
+
+            if(isset($user_id)){
+                $clients->where('user_id', $user_id);
             }
 
             $clients = $clients->paginate($perPage);
