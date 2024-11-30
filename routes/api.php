@@ -62,8 +62,8 @@ Route::middleware('jwt')->group(function(){
     });
 
     Route::prefix('credit-configuration')->group(function(){
-        Route::get('/', [CreditConfigurationController::class, 'search']);
-        Route::patch('/', [CreditConfigurationController::class, 'update']);       
+        Route::get('/search', [CreditConfigurationController::class, 'search']);
+        Route::patch('/update', [CreditConfigurationController::class, 'update']);       
     });
 
     Route::prefix('client')->group(function(){
