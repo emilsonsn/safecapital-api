@@ -14,7 +14,7 @@ class CreditConfigurationService
         try {
             $creditConfigurations = CreditConfiguration::first();
 
-            if(isset($creditConfigurations)){
+            if(!isset($creditConfigurations)){
                 throw new Exception('Configuração de crédito não encontrada', 400);
             }
 
@@ -46,7 +46,9 @@ class CreditConfigurationService
 
             $creditConfigurationToUpdate = CreditConfiguration::first();
 
-            if(!isset($creditConfigurationToUpdate)) throw new Exception('Configuração de crédito não encontrada');
+            if(!isset($creditConfigurationToUpdate)) {
+                throw new Exception('Configuração de crédito não encontrada');
+            }
 
             $creditConfigurationToUpdate->update($requestData);
 
