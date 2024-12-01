@@ -43,7 +43,8 @@ class UserService
             $status = $request->status;
             $validation = $request->validation;
 
-            $users = User::query();
+            $users = User::with('attachments')
+                ->query();
 
             if(isset($search_term)){
                 $users->where('name', 'LIKE', "%{$search_term}%")
@@ -192,7 +193,7 @@ class UserService
                 'cnpj' => ['required', 'string', 'max:255'],
                 'creci' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'max:255'],
-                'password' => ['required', 'string', 'max:255'],
+                'password' => ['nullable', 'string', 'max:255'],
                 'is_active' => ['required', 'boolean'],
                 'role' => ['required', 'in:Admin,Manager,Client'],
                 'attachments' => ['nullable', 'array'],
