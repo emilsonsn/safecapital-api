@@ -24,6 +24,7 @@ class Client extends Model
         'cpf',
         'cep',
         'street',
+        'number',
         'neighborhood',
         'city',
         'state',
@@ -33,5 +34,9 @@ class Client extends Model
 
     public function user(){
         return $this->belongsTo(User::class);
+    }
+
+    public function attachments(){
+        return $this->hasMany(ClientAttachment::class);
     }
 }

@@ -19,7 +19,8 @@ class ClientService
             $status = $request->status;
             $status = $request->user_id;
 
-            $clients = Client::orderBy('id', 'desc');
+            $clients = Client::with('attachments')
+                ->orderBy('id', 'desc');
 
             if(isset($search_term)){
                 $clients->where('name', 'LIKE', "%{$search_term}%")
@@ -57,6 +58,7 @@ class ClientService
                 'cpf' => ['required', 'string', 'max:255'],
                 'cep' => ['required', 'string', 'max:255'],
                 'street' => ['required', 'string', 'max:255'],
+                'number'=> ['required', 'string', 'max:255'],
                 'neighborhood' => ['required', 'string', 'max:255'],
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
@@ -108,6 +110,7 @@ class ClientService
                 'cpf' => ['required', 'string', 'max:255'],
                 'cep' => ['required', 'string', 'max:255'],
                 'street' => ['required', 'string', 'max:255'],
+                'number'=> ['required', 'string', 'max:255'],
                 'neighborhood' => ['required', 'string', 'max:255'],
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
