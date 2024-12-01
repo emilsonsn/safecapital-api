@@ -58,7 +58,7 @@ class SolicitationService
                 throw new Exception($validator->errors(), 400);
             }
 
-            $solicitation = Solicitation::create($validator->validated());
+            $solicitation = Solicitation::create($requestData);
 
             return ['status' => true, 'data' => $solicitation];
         } catch (Exception $error) {
@@ -96,7 +96,7 @@ class SolicitationService
                 $requestData['attachment'] = $path;
             }
 
-            $solicitation = SolicitationMessage::create($validator->validated());
+            $solicitation = SolicitationMessage::create($requestData);
 
             return ['status' => true, 'data' => $solicitation];
         } catch (Exception $error) {
