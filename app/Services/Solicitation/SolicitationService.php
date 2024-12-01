@@ -45,7 +45,7 @@ class SolicitationService
             $solicitation = Solicitation::with('messages.user')
                 ->find($id);
 
-            return $solicitation;
+            return ['status' => 200, 'data' => $solicitation];
         }
         catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];

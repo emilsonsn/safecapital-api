@@ -22,7 +22,7 @@ class SolicitationController extends Controller
     public function getById(int $id){
         $result = $this->solicitationService->getById($id);
 
-        return $result;
+        return $this->response($result);
     }
 
     public function create(Request $request){
