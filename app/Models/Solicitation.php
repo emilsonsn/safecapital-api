@@ -27,6 +27,6 @@ class Solicitation extends Model
     }
 
     public function messages(){
-        return $this->hasMany(SolicitationMessage::class);
+        return $this->hasMany(SolicitationMessage::class)->with('user');
     }
 }

@@ -57,7 +57,7 @@ Route::middleware('jwt')->group(function(){
         Route::get('search', [SolicitationController::class, 'search']);
         Route::post('create', [SolicitationController::class, 'create']);
         Route::patch('{id}', [SolicitationController::class, 'update']);
-        Route::delete('create-message', [SolicitationController::class, 'createMessage']);
+        Route::post('create-message', [SolicitationController::class, 'createMessage']);
         Route::delete('{id}', [SolicitationController::class, 'delete']);        
     });
 
