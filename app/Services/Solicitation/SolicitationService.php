@@ -58,9 +58,9 @@ class SolicitationService
             $rules = [
                 'contract_number' => ['required', 'string', 'max:255'],
                 'subject' => ['required', 'string', 'max:255'],
-                'status' => ['required', 'string', 'in:Open,Closed'],                
+                'status' => ['required', 'string', 'in:Received,UnderAnalysis,Awaiting,PaymentProvisioned,Completed'],
             ];
-
+            
             $userId = Auth::user()->id;
 
             $requestData = $request->all();
@@ -125,8 +125,8 @@ class SolicitationService
             $rules = [
                 'contract_number' => ['required', 'string', 'max:255'],
                 'subject' => ['required', 'string', 'max:255'],
-                'status' => ['required', 'string', 'in:Open,Closed'],                
-            ];           
+                'status' => ['required', 'string', 'in:Received,UnderAnalysis,Awaiting,PaymentProvisioned,Completed'],
+            ];
 
             $requestData = $request->all();
 
