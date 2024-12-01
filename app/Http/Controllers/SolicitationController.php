@@ -19,6 +19,12 @@ class SolicitationController extends Controller
         return $result;
     }
 
+    public function getById(int $id){
+        $result = $this->solicitationService->getById($id);
+
+        return $result;
+    }
+
     public function create(Request $request){
         $result = $this->solicitationService->create($request);
 

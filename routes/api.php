@@ -55,6 +55,7 @@ Route::middleware('jwt')->group(function(){
 
     Route::prefix('solicitation')->group(function(){
         Route::get('search', [SolicitationController::class, 'search']);
+        Route::get('{id}', [SolicitationController::class, 'getById']);
         Route::post('create', [SolicitationController::class, 'create']);
         Route::patch('{id}', [SolicitationController::class, 'update']);
         Route::post('create-message', [SolicitationController::class, 'createMessage']);

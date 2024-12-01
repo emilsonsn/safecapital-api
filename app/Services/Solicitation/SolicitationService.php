@@ -38,6 +38,20 @@ class SolicitationService
         }
     }
 
+    public function getById($id)
+    {
+        try {            
+
+            $solicitation = Solicitation::with('messages.user')
+                ->find($id);
+
+            return $solicitation;
+        }
+        catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
     public function create($request)
     {
         try {
