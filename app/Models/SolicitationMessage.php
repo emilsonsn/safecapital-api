@@ -13,7 +13,7 @@ class SolicitationMessage extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    public $table = 'solicitations';
+    public $table = 'solicitation_messages';
 
     protected $fillable = [
         'message',

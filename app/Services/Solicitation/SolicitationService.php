@@ -18,7 +18,8 @@ class SolicitationService
             $search_term = $request->search_term;
             $status = $request->status;
 
-            $solicitations = Solicitation::with('messages', 'user')->orderBy('id', 'desc');
+            $solicitations = Solicitation::with('messages', 'user')
+                ->orderBy('id', 'desc');
 
             if(isset($search_term)){
                 $solicitations->where('contract_number', 'LIKE', "%{$search_term}%")
