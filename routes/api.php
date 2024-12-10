@@ -32,6 +32,7 @@ Route::get('validateToken', [AuthController::class, 'validateToken']);
 Route::prefix('user')->group(function(){
     Route::post('create', [UserController::class, 'create']);
     Route::get('email', [UserController::class, 'getByEmail']);
+    Route::patch('{id}', [UserController::class, 'update']);
 });
 
 Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(function(){
@@ -51,7 +52,6 @@ Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(func
         Route::delete('{id}', [UserController::class, 'delete']);
         Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);        
         Route::patch('validation/{id}', [UserController::class, 'validation']);
-        Route::patch('{id}', [UserController::class, 'update']);
         Route::post('block/{id}', [UserController::class, 'userBlock']);
     });
 
