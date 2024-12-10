@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordRecoveryMail;
 use App\Mail\ValidationAcceptedMail;
 use App\Mail\ValidationRefusedMail;
+use App\Mail\ValidationReturnMail;
 use App\Mail\WelcomeMail;
 use App\Models\UserAttachment;
 use Illuminate\Support\Facades\Auth;
@@ -275,7 +276,7 @@ class UserService
         try {
 
             $rules = [
-                'validation' => ['required', 'string', 'in:Pending,Accepted,Refused'],
+                'validation' => ['required', 'string', 'in:Pending,Accepted,Return,Refused'],
                 'justification' => ['nullable', 'string', 'max:1000'],
             ];
 
@@ -300,6 +301,11 @@ class UserService
                 $userToUpdate->save();
                 Mail::to($userToUpdate->email)
                     ->send(new ValidationAcceptedMail($userToUpdate->name, $userToUpdate->email, $password));
+            }
+
+            if($request->validation == UserValidationEnum::Return->value){
+                Mail::to($userToUpdate->email)
+                ->send(new ValidationReturnMail($userToUpdate->name, $request->justification));
             }
 
             if($request->validation == UserValidationEnum::Refused->value){                

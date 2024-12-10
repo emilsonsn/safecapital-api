@@ -52,17 +52,28 @@
             color: #777;
             text-align: center;
         }
+
+        .frontUrl{
+            padding: 10px;
+            background: #0044cc;
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+        }
     </style>
 </head>
 
 <body>
     <div class="email-container">
         <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem?</h1>
-        <p>Infelizmente seu cadastro não foi aceito. Mas não fique desanime, você pode tentar novamente em 3 meses.</p>
+        <p>Infelizmente seu cadastro ainda não foi aceito.</p>
         <p>
             <h3>Justificativa:</h3>
             {{ $justification }}
         </p>
+
+        <a class="frontUrl" href="http://localhost:4200/register">Aplicar correções</a>
         
         <div class="footer">
             <p>© {{ date('Y') }} {{ env('APP_NAME') }}. Todos os direitos reservados.</p>

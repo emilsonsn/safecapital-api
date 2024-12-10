@@ -33,7 +33,7 @@ Route::prefix('user')->group(function(){
     Route::post('create', [UserController::class, 'create']);
 });
 
-Route::middleware('jwt')->group(function(){
+Route::middleware(['jwt', 'clientValidation'])->group(function(){
 
     Route::middleware(AdminMiddleware::class)->group(function() {
         // Middleware do admin
