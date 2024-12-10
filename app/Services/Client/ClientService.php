@@ -4,8 +4,12 @@ namespace App\Services\Client;
 
 use App\Models\Client;
 use App\Models\ClientAttachment;
+use App\Models\PolicyDocument;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ClientService
@@ -164,6 +168,41 @@ class ClientService
 
             return ['status' => true, 'data' => $clientName];
         }catch(Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
+    public function createPolicyDocument(Request $request, $id)
+    {
+        try {
+            $rules = [
+                'client_id' => ['required', 'integer'],
+                'file' => ['required', 'file', 'mimes:docx,pdf'],
+            ];
+    
+            $validator = Validator::make($request->all(), $rules);
+    
+            if ($validator->fails()) {
+                throw new Exception($validator->errors()->first(), 400);
+            }
+    
+            if (!Client::where('id', $id)->exists()) {
+                throw new Exception("Cliente não encontrado", 400);
+            }
+    
+            $requestData = $request->all();
+    
+            if ($request->hasFile('file')) {
+                $path = $request->file('file')->store('policy-documents', 'public');
+                $requestData['path'] = $path;
+            }
+    
+            $requestData['due_date'] = Carbon::now()->addYear();
+    
+            $policyDocument = PolicyDocument::create($requestData);
+    
+            return ['status' => true, 'data' => $policyDocument];
+        } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
