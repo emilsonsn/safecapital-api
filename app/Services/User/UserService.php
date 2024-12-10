@@ -341,7 +341,7 @@ class UserService
             // Não precisa enviar nada
             $acceptanceTerm = AcceptanceTerm::create([
                 'user_id' => Auth::user()->id,
-                'term_version' => '1.0',
+                'terms_version' => '1.0',
                 'ip' => $request->ip(),
             ]);
             return ['status' => true, 'data' => $acceptanceTerm];
