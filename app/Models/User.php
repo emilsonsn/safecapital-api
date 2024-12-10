@@ -72,4 +72,8 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(UserAttachment::class);
     }
 
+    public function terms() {
+        return $this->hasOne(AcceptanceTerm::class);
+    }
+
 }

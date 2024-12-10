@@ -31,9 +31,11 @@ Route::get('validateToken', [AuthController::class, 'validateToken']);
 
 Route::prefix('user')->group(function(){
     Route::post('create', [UserController::class, 'create']);
+    Route::get('email', [UserController::class, 'getByEmail']);
+    Route::post('accept-term', [UserController::class, 'AcceptTerm']);
 });
 
-Route::middleware(['jwt', 'clientValidation'])->group(function(){
+Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(function(){
 
     Route::middleware(AdminMiddleware::class)->group(function() {
         // Middleware do admin

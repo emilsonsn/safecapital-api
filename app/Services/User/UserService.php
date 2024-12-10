@@ -15,6 +15,7 @@ use App\Mail\ValidationAcceptedMail;
 use App\Mail\ValidationRefusedMail;
 use App\Mail\ValidationReturnMail;
 use App\Mail\WelcomeMail;
+use App\Models\AcceptanceTerm;
 use App\Models\UserAttachment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -44,7 +45,7 @@ class UserService
             $status = $request->status;
             $validation = $request->validation;
 
-            $users = User::with('attachments');
+            $users = User::with('attachments', 'terms');
 
             if(isset($search_term)){
                 $users->where('name', 'LIKE', "%{$search_term}%")
@@ -77,7 +78,7 @@ class UserService
     public function getUser()
     {
         try {
-            $user = auth()->user();
+            $user = User::with('terms')->find(auth()->user()->id);
     
             if ($user) {
                 // Cast para o tipo correto
@@ -330,6 +331,21 @@ class UserService
 
             return ['status' => true, 'data' => $userAttachmentName];
         }catch(Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
+    public function acceptTerm($request)
+    {
+        try {
+            // Não precisa enviar nada
+            $acceptanceTerm = AcceptanceTerm::create([
+                'user_id' => Auth::user()->id,
+                'term_version' => '1.0',
+                'ip' => $request->ip(),
+            ]);
+            return ['status' => true, 'data' => $acceptanceTerm];
+        } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }

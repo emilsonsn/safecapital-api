@@ -25,6 +25,12 @@ class UserController extends Controller
         return $result;
     }
 
+    public function getByEmail(Request $request){
+        $result = $this->userService->getByEmail($request);
+
+        return $result;
+    }
+
     public function cards(Request $request){
         $result = $this->userService->cards($request);
 
@@ -69,6 +75,13 @@ class UserController extends Controller
         $result = $this->userService->deleteAttachment($id);
 
         if($result['status']) $result['message'] = "Anexo Deletado com sucesso";
+        return $this->response($result);
+    }
+
+    public function acceptTerm($request){
+        $result = $this->userService->acceptTerm($request);
+
+        if($result['status']) $result['message'] = "Termos aceite com sucesso";
         return $this->response($result);
     }
 
