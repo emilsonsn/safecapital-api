@@ -43,8 +43,7 @@ class UserService
             $status = $request->status;
             $validation = $request->validation;
 
-            $users = User::with('attachments')
-                ->query();
+            $users = User::with('attachments');
 
             if(isset($search_term)){
                 $users->where('name', 'LIKE', "%{$search_term}%")
@@ -92,6 +91,27 @@ class UserService
         }
     }
 
+    public function getByEmail($request)
+    {
+        try {            
+
+            if(!$request->filled('email')){
+                throw new Exception('Email não enviado');
+            }
+
+            $user = User::where('email', $request->email)
+                ->first();            
+
+            if(!isset($user)){
+                throw new Exception('Usuário não encontrado');
+            }            
+
+            return $user;
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
     public function cards()
     {
         try {
@@ -130,12 +150,15 @@ class UserService
                 'is_active' => ['required', 'boolean'],
                 'role' => ['required', 'in:Admin,Manager,Client'],
                 'attachments' => ['nullable', 'array'],
+                'password' => ['nullable', 'string'],
             ];
 
             $requestData = $request->all();
 
-            $password = str_shuffle(Str::upper(Str::random(1)) . rand(0, 9) . Str::random(1, '?!@#$%^&*') . Str::random(5));
-            $requestData['password'] = Hash::make($password);
+            if(!isset($requestData['password'])){
+                $password = str_shuffle(Str::upper(Str::random(1)) . rand(0, 9) . Str::random(1, '?!@#$%^&*') . Str::random(5));
+                $requestData['password'] = Hash::make($password);
+            }
                 
             $validator = Validator::make($requestData, $rules);
     
