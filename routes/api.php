@@ -32,7 +32,6 @@ Route::get('validateToken', [AuthController::class, 'validateToken']);
 Route::prefix('user')->group(function(){
     Route::post('create', [UserController::class, 'create']);
     Route::get('email', [UserController::class, 'getByEmail']);
-    Route::post('accept-term', [UserController::class, 'AcceptTerm']);
 });
 
 Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(function(){
@@ -74,6 +73,7 @@ Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(func
     Route::prefix('client')->group(function(){
         Route::get('search', [ClientController::class, 'search']);
         Route::post('create', [ClientController::class, 'create']);
+        Route::post('accept-term', [UserController::class, 'AcceptTerm']);
         Route::post('policy-document', [ClientController::class, 'createPolicyDocument']);
         Route::patch('{id}', [ClientController::class, 'update']);
         Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
