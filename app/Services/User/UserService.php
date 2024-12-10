@@ -101,7 +101,8 @@ class UserService
                 throw new Exception('Email não enviado');
             }
 
-            $user = User::where('email', $request->email)
+            $user = User::with('attachments')
+                ->where('email', $request->email)
                 ->first();            
 
             if(!isset($user)){
@@ -338,7 +339,6 @@ class UserService
     public function acceptTerm($request)
     {
         try {
-            // Não precisa enviar nada
             $acceptanceTerm = AcceptanceTerm::create([
                 'user_id' => Auth::user()->id,
                 'terms_version' => '1.0',
