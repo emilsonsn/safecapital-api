@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\ClientValidationMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -17,6 +18,7 @@ class Kernel extends HttpKernel
      protected $routeMiddleware = [
         'jwt' => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
         'user' => \App\Http\Middleware\UserMiddleware::class,
+        'clientValidation' => ClientValidationMiddleware::class
     ];
 
     

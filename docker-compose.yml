@@ -3,8 +3,8 @@ services:
         build:
             context: .
             dockerfile: dockerfiles/php/Dockerfile
-        image: granatum-api
-        container_name: granatum-api
+        image: safecapital-api
+        container_name: safecapital-api
         tty: true
         ports:
             - "9000:9000"
