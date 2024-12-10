@@ -17,11 +17,10 @@ class CreditConfiguration extends Model
     public $table = 'credit_configurations';
 
     protected $fillable = [
-        'start_approved_score',
-        'end_approved_score',
-        'start_pending_score',
-        'end_pending_score',
-        'start_disapproved_score',
-        'end_disapproved_score',
+        'description',
+        'start_score',
+        'end_score',
+        'has_pending_issues',
+        'status',
     ];
 }

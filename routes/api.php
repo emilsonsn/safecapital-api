@@ -66,7 +66,9 @@ Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(func
 
     Route::prefix('credit-configuration')->group(function(){
         Route::get('search', [CreditConfigurationController::class, 'search']);
-        Route::patch('update', [CreditConfigurationController::class, 'update']);       
+        Route::patch('create', [CreditConfigurationController::class, 'create']);
+        Route::patch('{id}', [CreditConfigurationController::class, 'update']);    
+        Route::delete('delete', [CreditConfigurationController::class, 'delete']);
     });
 
     Route::prefix('client')->group(function(){

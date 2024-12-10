@@ -13,16 +13,30 @@ class CreditConfigurationController extends Controller
         $this->creditConfigurationService = $creditConfigurationService;
     }
 
-    public function search(){
-        $result = $this->creditConfigurationService->search();
+    public function search(Request $request){
+        $result = $this->creditConfigurationService->search($request);
 
         return $result;
     }
 
-    public function update(Request $request){
-        $result = $this->creditConfigurationService->update($request);
+    public function create(Request $request, $id){
+        $result = $this->creditConfigurationService->create($request);
+
+        if($result['status']) $result['message'] = "Configuração de crédito criada com sucesso";
+        return $this->response($result);
+    }
+
+    public function update(Request $request, $id){
+        $result = $this->creditConfigurationService->update($request, $id);
 
         if($result['status']) $result['message'] = "Configuração de crédito atualizada com sucesso";
+        return $this->response($result);
+    }
+
+    public function delete($id){
+        $result = $this->creditConfigurationService->delete($id);
+
+        if($result['status']) $result['message'] = "Configuração de crédito deletada com sucesso";
         return $this->response($result);
     }
 

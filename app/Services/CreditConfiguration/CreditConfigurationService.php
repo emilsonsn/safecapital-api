@@ -9,14 +9,28 @@ use Illuminate\Support\Facades\Validator;
 class CreditConfigurationService
 {
 
-    public function search()
+    public function search($request)
     {
         try {
-            $creditConfigurations = CreditConfiguration::first();
+            $perPage = $request->input('take', 10);
+            $search_term = $request->search_term;
+            $status = $request->status;
+
+            $creditConfigurations = CreditConfiguration::query();
+
+            if(isset($search_term)){
+                $creditConfigurations->where('description', 'LIKE', "%$search_term%");
+            }
+
+            if(isset($status)){
+                $creditConfigurations->where('status', $status);
+            }
 
             if(!isset($creditConfigurations)){
                 throw new Exception('Configuração de crédito não encontrada', 400);
             }
+
+            $creditConfigurations = $creditConfigurations->paginate($perPage);
 
             return $creditConfigurations;
         } catch (Exception $error) {
@@ -24,16 +38,15 @@ class CreditConfigurationService
         }
     }
 
-    public function update($request)
+    public function create($request)
     {
         try {
             $rules = [
-                'start_approved_score' => ['required', 'integer'],
-                'end_approved_score' => ['required', 'integer'],
-                'start_pending_score' => ['required', 'integer'],
-                'end_pending_score' => ['required', 'integer'],
-                'start_disapproved_score' => ['required', 'integer'],
-                'end_disapproved_score' => ['required', 'integer'],
+                'description' => ['required', 'string', 'max:255'],
+                'start_score' => ['required', 'integer'],
+                'end_score' => ['required', 'integer'],
+                'has_pending_issues' => ['required', 'boolean'],
+                'status' => ['required', 'in:Pending,Approved,Disapproved'],
             ];     
 
             $requestData = $request->all();
@@ -44,7 +57,34 @@ class CreditConfigurationService
                 throw new Exception($validator->errors(), 400);
             }
 
-            $creditConfigurationToUpdate = CreditConfiguration::first();
+            $creditConfiguration = CreditConfiguration::create($requestData);
+
+            return ['status' => true, 'data' => $creditConfiguration];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
+    public function update($request, $id)
+    {
+        try {
+            $rules = [
+                'description' => ['required', 'string', 'max:255'],
+                'start_score' => ['required', 'integer'],
+                'end_score' => ['required', 'integer'],
+                'has_pending_issues' => ['required', 'boolean'],
+                'status' => ['required', 'in:Pending,Approved,Disapproved'],
+            ];     
+
+            $requestData = $request->all();
+
+            $validator = Validator::make($requestData, $rules);
+
+            if ($validator->fails()) {
+                throw new Exception($validator->errors(), 400);
+            }
+
+            $creditConfigurationToUpdate = CreditConfiguration::find($id);
 
             if(!isset($creditConfigurationToUpdate)) {
                 throw new Exception('Configuração de crédito não encontrada');
@@ -55,6 +95,21 @@ class CreditConfigurationService
             return ['status' => true, 'data' => $creditConfigurationToUpdate];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }
+
+    public function delete($id){
+        try{
+            $creditConfiguration = CreditConfiguration::find($id);
+
+            if(!$creditConfiguration) throw new Exception('Configuração de crédito não encontrada');
+
+            $configurationDescription = $creditConfiguration->description;
+            $creditConfiguration->delete();
+
+            return ['status' => true, 'data' => $configurationDescription];
+        }catch(Exception $error) {
+            return [ 'status' => false, 'error' => $error->getMessage(), 'statusCode' => 400 ];
         }
     }
 }
