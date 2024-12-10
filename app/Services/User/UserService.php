@@ -108,7 +108,7 @@ class UserService
                 throw new Exception('Usuário não encontrado');
             }            
 
-            return $user;
+            return ['status' => true, 'data' => $user];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }

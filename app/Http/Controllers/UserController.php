@@ -28,7 +28,7 @@ class UserController extends Controller
     public function getByEmail(Request $request){
         $result = $this->userService->getByEmail($request);
 
-        return $result;
+        return $this->response($result);
     }
 
     public function cards(Request $request){
