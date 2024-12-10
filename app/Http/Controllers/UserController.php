@@ -78,7 +78,7 @@ class UserController extends Controller
         return $this->response($result);
     }
 
-    public function acceptTerm($request){
+    public function acceptTerm(Request $request){
         $result = $this->userService->acceptTerm($request);
 
         if($result['status']) $result['message'] = "Termos aceite com sucesso";
