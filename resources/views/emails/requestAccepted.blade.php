@@ -59,7 +59,7 @@
     <div class="email-container">
         <h1>Seja bem-vindo, <strong>{{ $name }}</strong>! Sua solicitação de cadastro foi aceita!</h1>
         <p>Agora você já pode acessar seu ambiente no nosso sistema.</p>
-        <p>Segue suas credenciais de acesso:</p>
+        <p>Segue suas novas credenciais de acesso:</p>
         <ul>
             <li><strong>Email:</strong> {{ $email }}</li>
             <li><strong>Senha:</strong> {{ $password }}</li>
