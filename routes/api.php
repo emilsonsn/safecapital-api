@@ -47,6 +47,7 @@ Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(func
         Route::get('search', [UserController::class, 'search']);
         Route::get('cards', [UserController::class, 'cards']);
         Route::get('me', [UserController::class, 'getUser']);
+        Route::post('accept-term', [UserController::class, 'AcceptTerm']);
         Route::delete('{id}', [UserController::class, 'delete']);
         Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);        
         Route::patch('validation/{id}', [UserController::class, 'validation']);
@@ -73,7 +74,6 @@ Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(func
     Route::prefix('client')->group(function(){
         Route::get('search', [ClientController::class, 'search']);
         Route::post('create', [ClientController::class, 'create']);
-        Route::post('accept-term', [UserController::class, 'AcceptTerm']);
         Route::post('policy-document', [ClientController::class, 'createPolicyDocument']);
         Route::patch('{id}', [ClientController::class, 'update']);
         Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
