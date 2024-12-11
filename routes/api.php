@@ -32,6 +32,9 @@ Route::get('validateToken', [AuthController::class, 'validateToken']);
 Route::prefix('user')->group(function(){
     Route::post('create', [UserController::class, 'create']);
     Route::get('email', [UserController::class, 'getByEmail']);
+});
+
+Route::middleware('jwt')->prefix('user')->group(function(){
     Route::patch('{id}', [UserController::class, 'update']);
 });
 
