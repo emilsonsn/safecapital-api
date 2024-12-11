@@ -237,20 +237,24 @@ class UserService
 
             $userToUpdate->update($requestData);
 
-            if(isset($request->attachments)){
-                foreach($request->attachments as $attachment){
+            if (isset($request->attachments)) {
+                foreach ($request->attachments as $attachment) {
                     $attachment = is_array($attachment) ? $attachment : json_decode($attachment, true);
-                    $path = $attachment['file']->store('attachments', 'public');
-                    UserAttachment::firstOrCreate([
-                        'id' => $attachment->getClientOriginalName(),
-                    ], [
-                        'category' => $attachment['category'],
-                        'filename' => $attachment['file']->getClientOriginalName(),
-                        'path' => $path,
-                        'user_id' => Auth::user()->id,
-                    ]);
+            
+                    if (isset($attachment['file']) && $attachment['file'] instanceof \Illuminate\Http\UploadedFile) {
+                        $path = $attachment['file']->store('attachments', 'public');
+            
+                        UserAttachment::firstOrCreate([
+                            'id' => $attachment['file']->getClientOriginalName(),
+                        ], [
+                            'category' => $attachment['category'] ?? null,
+                            'filename' => $attachment['file']->getClientOriginalName(),
+                            'path' => $path,
+                            'user_id' => Auth::user()->id,
+                        ]);
+                    }
                 }
-            }
+            }            
 
             return ['status' => true, 'data' => $userToUpdate];
         } catch (Exception $error) {
