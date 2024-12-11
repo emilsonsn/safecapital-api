@@ -38,48 +38,51 @@ Route::middleware('jwt')->prefix('user')->group(function(){
     Route::patch('{id}', [UserController::class, 'update']);
 });
 
-Route::middleware(['jwt', 'clientValidation', 'clienteAcceptTerms'])->group(function(){
+Route::middleware(['jwt', 'clientValidation'])->group(function(){
 
-    Route::middleware(AdminMiddleware::class)->group(function() {
-        // Middleware do admin
+    Route::prefix('user')->group(function(){        
+        Route::get('me', [UserController::class, 'getUser']);
     });
 
     Route::post('logout', [AuthController::class, 'logout']);
 
-    Route::prefix('user')->group(function(){
-        Route::get('all', [UserController::class, 'all']);
-        Route::get('search', [UserController::class, 'search']);
-        Route::get('cards', [UserController::class, 'cards']);
-        Route::get('me', [UserController::class, 'getUser']);
-        Route::post('accept-term', [UserController::class, 'AcceptTerm']);
-        Route::delete('{id}', [UserController::class, 'delete']);
-        Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);        
-        Route::patch('validation/{id}', [UserController::class, 'validation']);
-        Route::post('block/{id}', [UserController::class, 'userBlock']);
+    Route::middleware('clienteAcceptTerms')->group(function() {
+    
+        Route::prefix('user')->group(function(){
+            Route::get('all', [UserController::class, 'all']);
+            Route::get('search', [UserController::class, 'search']);
+            Route::get('cards', [UserController::class, 'cards']);
+            Route::post('accept-term', [UserController::class, 'AcceptTerm']);
+            Route::delete('{id}', [UserController::class, 'delete']);
+            Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);        
+            Route::patch('validation/{id}', [UserController::class, 'validation']);
+            Route::post('block/{id}', [UserController::class, 'userBlock']);
+        });
+    
+        Route::prefix('solicitation')->group(function(){
+            Route::get('search', [SolicitationController::class, 'search']);
+            Route::get('{id}', [SolicitationController::class, 'getById']);
+            Route::post('create', [SolicitationController::class, 'create']);
+            Route::patch('{id}', [SolicitationController::class, 'update']);
+            Route::post('create-message', [SolicitationController::class, 'createMessage']);
+            Route::delete('{id}', [SolicitationController::class, 'delete']);        
+        });
+    
+        Route::prefix('credit-configuration')->group(function(){
+            Route::get('search', [CreditConfigurationController::class, 'search']);
+            Route::patch('create', [CreditConfigurationController::class, 'create']);
+            Route::patch('{id}', [CreditConfigurationController::class, 'update']);    
+            Route::delete('{id}', [CreditConfigurationController::class, 'delete']);
+        });
+    
+        Route::prefix('client')->group(function(){
+            Route::get('search', [ClientController::class, 'search']);
+            Route::post('create', [ClientController::class, 'create']);
+            Route::post('policy-document', [ClientController::class, 'createPolicyDocument']);
+            Route::patch('{id}', [ClientController::class, 'update']);
+            Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
+            Route::delete('{id}', [ClientController::class, 'delete']);        
+        });
     });
 
-    Route::prefix('solicitation')->group(function(){
-        Route::get('search', [SolicitationController::class, 'search']);
-        Route::get('{id}', [SolicitationController::class, 'getById']);
-        Route::post('create', [SolicitationController::class, 'create']);
-        Route::patch('{id}', [SolicitationController::class, 'update']);
-        Route::post('create-message', [SolicitationController::class, 'createMessage']);
-        Route::delete('{id}', [SolicitationController::class, 'delete']);        
-    });
-
-    Route::prefix('credit-configuration')->group(function(){
-        Route::get('search', [CreditConfigurationController::class, 'search']);
-        Route::patch('create', [CreditConfigurationController::class, 'create']);
-        Route::patch('{id}', [CreditConfigurationController::class, 'update']);    
-        Route::delete('delete', [CreditConfigurationController::class, 'delete']);
-    });
-
-    Route::prefix('client')->group(function(){
-        Route::get('search', [ClientController::class, 'search']);
-        Route::post('create', [ClientController::class, 'create']);
-        Route::post('policy-document', [ClientController::class, 'createPolicyDocument']);
-        Route::patch('{id}', [ClientController::class, 'update']);
-        Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
-        Route::delete('{id}', [ClientController::class, 'delete']);        
-    });
 });

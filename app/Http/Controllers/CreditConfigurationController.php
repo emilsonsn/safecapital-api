@@ -19,7 +19,7 @@ class CreditConfigurationController extends Controller
         return $result;
     }
 
-    public function create(Request $request, $id){
+    public function create(Request $request){
         $result = $this->creditConfigurationService->create($request);
 
         if($result['status']) $result['message'] = "Configuração de crédito criada com sucesso";
