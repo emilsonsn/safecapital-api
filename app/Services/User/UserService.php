@@ -245,7 +245,7 @@ class UserService
                         $path = $attachment['file']->store('attachments', 'public');
             
                         UserAttachment::firstOrCreate([
-                            'id' => $attachment['file']->getClientOriginalName(),
+                            'id' => $attachment['id'] ?? null,
                         ], [
                             'category' => $attachment['category'] ?? null,
                             'filename' => $attachment['file']->getClientOriginalName(),
