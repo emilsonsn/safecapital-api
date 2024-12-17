@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CreditConfigurationController;
 use App\Http\Controllers\SolicitationController;
+use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AdminMiddleware;
 
@@ -73,6 +74,11 @@ Route::middleware(['jwt', 'clientValidation'])->group(function(){
             Route::patch('create', [CreditConfigurationController::class, 'create']);
             Route::patch('{id}', [CreditConfigurationController::class, 'update']);    
             Route::delete('{id}', [CreditConfigurationController::class, 'delete']);
+        });
+
+        Route::prefix('tax-setting')->group(function(){
+            Route::get('search', [TaxSettingController::class, 'search']);
+            Route::patch('{id}', [TaxSettingController::class, 'update']);    
         });
     
         Route::prefix('client')->group(function(){
