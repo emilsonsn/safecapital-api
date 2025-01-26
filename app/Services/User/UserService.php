@@ -44,6 +44,7 @@ class UserService
             $role = $request->role;
             $status = $request->status;
             $validation = $request->validation;
+            $is_active = $request->is_active;
 
             $users = User::with('attachments', 'terms');
 
@@ -65,6 +66,10 @@ class UserService
             if(isset($validation)){
                 $validations = explode(',' ,$validation);
                 $users->whereIn('validation', $validations);
+            }
+
+            if(isset($is_active)){
+                $users->where('is_active', $is_active);
             }
 
             $users = $users->paginate($perPage);
