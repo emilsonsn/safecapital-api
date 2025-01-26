@@ -16,7 +16,7 @@ class ClientAttachment extends Model
     public $table = 'client_attachments';
 
     protected $fillable = [
-        'category',
+        'description',
         'filename',
         'path',
         'client_id',

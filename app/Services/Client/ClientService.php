@@ -27,11 +27,13 @@ class ClientService
                 ->orderBy('id', 'desc');
 
             if(isset($search_term)){
-                $clients->where('name', 'LIKE', "%{$search_term}%")
-                    ->orWhere('surname', 'LIKE', "%{$search_term}%")
-                    ->orWhere('cpf', 'LIKE', "%{$search_term}%")
-                    ->orWhere('email', 'LIKE', "%{$search_term}%")
-                    ->orWhere('phone', 'LIKE', "%{$search_term}%");
+                $clients->where(function($query) use ($search_term){
+                    $query->where('name', 'LIKE', "%{$search_term}%")
+                        ->orWhere('surname', 'LIKE', "%{$search_term}%")
+                        ->orWhere('cpf', 'LIKE', "%{$search_term}%")
+                        ->orWhere('email', 'LIKE', "%{$search_term}%")
+                        ->orWhere('phone', 'LIKE', "%{$search_term}%");
+                });                    
             }
 
             if(isset($status)){
@@ -68,6 +70,9 @@ class ClientService
                 'condominium_fee' => ['required', 'numeric'],
                 'policy_value' => ['required', 'numeric'],
                 'neighborhood' => ['required', 'string', 'max:255'],
+                'observations' => ['nullable', 'string'],
+                'payment_form' => ['required', 'string'],
+                'complement' => ['nullable', 'string'],
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
                 'attachments' => ['nullable', 'array'],
@@ -92,7 +97,7 @@ class ClientService
                     ClientAttachment::firstOrCreate([
                         'id' => $attachment['id'] ?? null,
                     ], [
-                        'category' => $attachment['category'],
+                        'description' => $attachment['description'],
                         'filename' => $attachment['file']->getClientOriginalName(),
                         'path' => $path,
                         'client_id' => $client->id,
@@ -124,6 +129,9 @@ class ClientService
                 'condominium_fee' => ['required', 'numeric'],
                 'policy_value' => ['required', 'numeric'],
                 'neighborhood' => ['required', 'string', 'max:255'],
+                'observations' => ['nullable', 'string'],
+                'payment_form' => ['required', 'string'],
+                'complement' => ['nullable', 'string'],
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
                 'attachments' => ['nullable', 'array'],             
@@ -151,7 +159,7 @@ class ClientService
                     ClientAttachment::firstOrCreate([
                         'id' => $attachment['id'] ?? null,
                     ], [
-                        'category' => $attachment['category'],
+                        'description' => $attachment['description'],
                         'filename' => $attachment['file']->getClientOriginalName(),
                         'path' => $path,
                         'client_id' => $clientToUpdate->id,
