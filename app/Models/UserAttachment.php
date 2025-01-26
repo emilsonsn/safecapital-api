@@ -19,7 +19,7 @@ class UserAttachment extends Model
         'category',
         'filename',
         'path',
-        'client_id',
+        'user_id',
     ];
 
     public function getPathAttribute($value)

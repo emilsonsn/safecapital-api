@@ -83,7 +83,7 @@ class UserService
     public function getUser()
     {
         try {
-            $user = User::with('terms')->find(auth()->user()->id);
+            $user = User::with('attachments', 'terms')->find(auth()->user()->id);
     
             if ($user) {
                 // Cast para o tipo correto
