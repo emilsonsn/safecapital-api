@@ -2,6 +2,7 @@
 
 namespace App\Services\Solicitation;
 
+use App\Enums\UserRoleEnum;
 use App\Models\Solicitation;
 use App\Models\SolicitationMessage;
 use Exception;
@@ -17,14 +18,16 @@ class SolicitationService
             $perPage = $request->input('take', 10);
             $search_term = $request->search_term;
             $status = $request->status;
-            $category = $request->category;
+            $category = $request->category;            
 
             $solicitations = Solicitation::with('messages', 'user')
                 ->orderBy('id', 'desc');
 
             if(isset($search_term)){
-                $solicitations->where('contract_number', 'LIKE', "%{$search_term}%")
-                    ->orWhere('subject', 'LIKE', "%{$search_term}%");
+                $solicitations->where(function($query) use($search_term){
+                    $query->where('contract_number', 'LIKE', "%{$search_term}%")
+                        ->orWhere('subject', 'LIKE', "%{$search_term}%");
+               });             
             }
 
             if(isset($status)){
@@ -33,6 +36,10 @@ class SolicitationService
 
             if(isset($category)){
                 $solicitations->where('category', $category);
+            }
+
+            if(Auth::user()->role !== UserRoleEnum::Admin->value){
+                $solicitations->where('user_id', Auth::user()->id);
             }
 
             $solicitations = $solicitations->paginate($perPage);
@@ -108,7 +115,7 @@ class SolicitationService
                 throw new Exception($validator->errors(), 400);
             }
 
-            if(!isset($request->message) && !isset($request->message)){
+            if(!isset($request->message) && !$request->hasFile('attachment')){
                 throw new Exception('Nenhum campo de mensagem ou anexo foi enviado');
             }
 
