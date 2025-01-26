@@ -19,6 +19,7 @@ class SolicitationService
             $search_term = $request->search_term;
             $status = $request->status;
             $category = $request->category;            
+            $user_id = $request->user_id;
 
             $solicitations = Solicitation::with('messages', 'user')
                 ->orderBy('id', 'desc');
@@ -40,6 +41,8 @@ class SolicitationService
 
             if(Auth::user()->role !== UserRoleEnum::Admin->value){
                 $solicitations->where('user_id', Auth::user()->id);
+            }else if(isset($user_id)){            
+                $solicitations->where('user_id', $user_id);
             }
 
             $solicitations = $solicitations->paginate($perPage);
