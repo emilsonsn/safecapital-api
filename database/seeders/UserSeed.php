@@ -22,13 +22,28 @@ class UserSeed extends Seeder
             'surname' => 'do sistema',
             'phone' => '83991236636',
             'company_name' => 'TechSoul',
-            'email' => 'admin@admin',
             'password' => Hash::make('admin'),
             'cnpj' => '50774377000176',
             'creci' => null,
             'is_active' => true,
             'validation' => null,
             'role' => 'Admin',
+        ]);
+
+        User::firstOrCreate([
+            'email' => 'user@user',
+        ],
+        [
+            'name' => 'Colaborador',
+            'surname' => 'do sistema',
+            'phone' => '83991236636',
+            'company_name' => 'TechSoul',
+            'password' => Hash::make('user'),
+            'cnpj' => '50774377000179',
+            'creci' => null,
+            'is_active' => true,
+            'validation' => null,
+            'role' => 'Client',
         ]);
     }
 }

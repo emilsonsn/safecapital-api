@@ -13,15 +13,25 @@ class CreditConfigurationSeed extends Seeder
      */
     public function run(): void
     {
-        $configuration = [
-            'start_approved_score' => 620,
-            'end_approved_score' => 1000,
-            'start_pending_score' => 400,
-            'end_pending_score' => 620,
-            'start_disapproved_score' => 0,
-            'end_disapproved_score' => 400,
+        $configurations = [
+            [
+                'description' => 'Aprovado',
+                'start_score' => 601,
+                'end_score' => 1000,
+                'has_pending_issues' => true,
+                'status' => 'Approved',
+            ],
+            [
+                'description' => 'Aprovado',
+                'start_score' => 601,
+                'end_score' => 1000,
+                'has_pending_issues' => true,
+                'status' => 'Pending',
+            ],            
         ];
-        
-        CreditConfiguration::firstOrcreate($configuration, $configuration);
+
+        foreach ($configurations as $configuration) {
+            CreditConfiguration::firstOrcreate($configuration, $configuration);
+        }
     }
 }

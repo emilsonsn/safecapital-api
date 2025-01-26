@@ -17,6 +17,7 @@ class SolicitationService
             $perPage = $request->input('take', 10);
             $search_term = $request->search_term;
             $status = $request->status;
+            $category = $request->category;
 
             $solicitations = Solicitation::with('messages', 'user')
                 ->orderBy('id', 'desc');
@@ -28,6 +29,10 @@ class SolicitationService
 
             if(isset($status)){
                 $solicitations->where('status', $status);
+            }
+
+            if(isset($category)){
+                $solicitations->where('category', $category);
             }
 
             $solicitations = $solicitations->paginate($perPage);
@@ -59,6 +64,7 @@ class SolicitationService
                 'contract_number' => ['required', 'string', 'max:255'],
                 'subject' => ['required', 'string', 'max:255'],
                 'status' => ['required', 'string', 'in:Received,UnderAnalysis,Awaiting,PaymentProvisioned,Completed'],
+                'category' => ['required', 'string'],
             ];
             
             $userId = Auth::user()->id;
@@ -126,6 +132,7 @@ class SolicitationService
                 'contract_number' => ['required', 'string', 'max:255'],
                 'subject' => ['required', 'string', 'max:255'],
                 'status' => ['required', 'string', 'in:Received,UnderAnalysis,Awaiting,PaymentProvisioned,Completed'],
+                'category' => ['required', 'string'],
             ];
 
             $requestData = $request->all();

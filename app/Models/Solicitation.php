@@ -19,6 +19,7 @@ class Solicitation extends Model
         'contract_number',
         'subject',
         'status',
+        'category',
         'user_id',
     ];
 
