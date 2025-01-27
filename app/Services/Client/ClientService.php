@@ -196,6 +196,7 @@ class ClientService
             if(!$client) throw new Exception('Cliente não encontrado');
 
             $client->status = ClientStatusEnum::WaitingPayment->value;
+            $client->save();
 
             return ['status' => true, 'data' => $client];
         }catch(Exception $error) {
