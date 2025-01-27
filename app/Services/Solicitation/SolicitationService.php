@@ -36,7 +36,8 @@ class SolicitationService
             }
 
             if(isset($category)){
-                $solicitations->where('category', $category);
+                $categories = explode(',' ,$category);
+                $solicitations->whereIn('category', $categories);
             }
 
             if(Auth::user()->role !== UserRoleEnum::Admin->value){
