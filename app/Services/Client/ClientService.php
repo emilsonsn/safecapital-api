@@ -2,6 +2,7 @@
 
 namespace App\Services\Client;
 
+use App\Enums\ClientStatusEnum;
 use App\Models\Client;
 use App\Models\ClientAttachment;
 use App\Models\PolicyDocument;
@@ -187,6 +188,20 @@ class ClientService
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
+
+    public function accept($id){
+        try{
+            $client = Client::find($id);
+
+            if(!$client) throw new Exception('Cliente não encontrado');
+
+            $client->status = ClientStatusEnum::WaitingPayment->value;
+
+            return ['status' => true, 'data' => $client];
+        }catch(Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }    
 
     public function createPolicyDocument(Request $request, $id)
     {
