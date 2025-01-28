@@ -85,7 +85,7 @@ Route::middleware(['jwt', 'clientValidation'])->group(function(){
             Route::get('search', [ClientController::class, 'search']);
             Route::post('create', [ClientController::class, 'create']);
             Route::post('policy-document', [ClientController::class, 'createPolicyDocument']);
-            Route::path('policy/{id}', [ClientController::class, 'updatePolicyDocument']);
+            Route::patch('policy/{id}', [ClientController::class, 'updatePolicyDocument']);
             Route::patch('accept/{id}', [ClientController::class, 'accept']);
             Route::patch('{id}', [ClientController::class, 'update']);
             Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
