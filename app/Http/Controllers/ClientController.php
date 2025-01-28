@@ -33,7 +33,13 @@ class ClientController extends Controller
         return $this->response($result);
     }
 
+    public function updatePolicyDocument(Request $request, $id){
+        $result = $this->clientService->updatePolicyDocument($request, $id,);
 
+        if($result['status']) $result['message'] = "Apolice salva com sucesso";
+        return $this->response($result);
+    }
+    
     public function update(Request $request, $id){
         $result = $this->clientService->update($request, $id);
 

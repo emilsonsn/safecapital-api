@@ -126,6 +126,7 @@ class ClientService
                 'street' => ['required', 'string', 'max:255'],
                 'number'=> ['required', 'string', 'max:255'],
                 'rental_value' => ['required', 'numeric'],
+                'status' => ['required', 'string'],
                 'property_tax' => ['required', 'numeric'],
                 'condominium_fee' => ['required', 'numeric'],
                 'policy_value' => ['required', 'numeric'],
@@ -239,6 +240,31 @@ class ClientService
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
+
+    public function updatePolicyDocument(Request $request, $id)
+    {
+        try {
+            $rules = [
+                'contract_number' => ['required', 'string'],
+            ];
+    
+            $validator = Validator::make($request->all(), $rules);
+    
+            if ($validator->fails()) {
+                throw new Exception($validator->errors()->first(), 400);
+            }
+
+            $policyDocument = PolicyDocument::findOrFail('id', $id);
+    
+            $requestData = $request->all();
+
+            $policyDocument->update($requestData);
+    
+            return ['status' => true, 'data' => $policyDocument];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }    
 
     public function deleteAttachment($id){
         try{
