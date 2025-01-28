@@ -221,7 +221,7 @@ class ClientService
 
             $client = Client::with('policy')->find($request->id);
             
-            if($client->policy){
+            if(isset($client->policy)){
                 throw new Exception('Esse cliente já possui contrato anexado', 400);
             }
     
