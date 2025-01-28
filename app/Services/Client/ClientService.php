@@ -228,10 +228,12 @@ class ClientService
             $requestData = $request->all();
     
             if ($request->hasFile('file')) {
-                $path = $request->file('file')->store('policy-documents', 'public');
+                $file = $request->file('file');
+                $path = $file->store('policy-documents', 'public');
                 $requestData['path'] = $path;
+                $requestData['filename'] = $file->getClientOriginalName();
             }
-    
+            
             $requestData['due_date'] = Carbon::now()->addYear();
             $requestData['contract_number'] = Carbon::now()->format('YmdHis');
             
