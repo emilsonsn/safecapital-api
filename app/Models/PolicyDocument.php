@@ -17,6 +17,7 @@ class PolicyDocument extends Model
     public $fillable = [
         'filename',
         'path',
+        'contract_number',
         'due_date',
         'client_id',
     ];

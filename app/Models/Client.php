@@ -46,4 +46,8 @@ class Client extends Model
     public function attachments(){
         return $this->hasMany(ClientAttachment::class);
     }
+
+    public function policy(){
+        return $this->hasOne(PolicyDocument::class);
+    }
 }

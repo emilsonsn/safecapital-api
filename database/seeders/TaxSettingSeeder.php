@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\TaxSetting;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class TaxSettingSeeder extends Seeder
@@ -15,7 +14,7 @@ class TaxSettingSeeder extends Seeder
     {
 
         TaxSetting::where('id', '>', 0)->delete();
-        
+
         $tax = [
             'percentage' => 10,
             'tax' => 150,

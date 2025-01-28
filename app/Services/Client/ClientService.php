@@ -24,7 +24,7 @@ class ClientService
             $status = $request->status;
             $status = $request->user_id;
 
-            $clients = Client::with('attachments')
+            $clients = Client::with('attachments', 'policy')
                 ->orderBy('id', 'desc');
 
             if(isset($search_term)){
@@ -230,7 +230,8 @@ class ClientService
             }
     
             $requestData['due_date'] = Carbon::now()->addYear();
-    
+            $requestData['contract_number'] = Carbon::now()->format('YmdHis');
+            
             $policyDocument = PolicyDocument::create($requestData);
     
             return ['status' => true, 'data' => $policyDocument];
