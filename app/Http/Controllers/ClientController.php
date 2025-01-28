@@ -26,8 +26,8 @@ class ClientController extends Controller
         return $this->response($result);
     }
 
-    public function createPolicyDocument(Request $request, $id){
-        $result = $this->clientService->createPolicyDocument($request, $id,);
+    public function createPolicyDocument(Request $request){
+        $result = $this->clientService->createPolicyDocument($request);
 
         if($result['status']) $result['message'] = "Apolice salva com sucesso";
         return $this->response($result);

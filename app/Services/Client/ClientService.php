@@ -205,7 +205,7 @@ class ClientService
         }
     }    
 
-    public function createPolicyDocument(Request $request, $id)
+    public function createPolicyDocument(Request $request)
     {
         try {
             $rules = [
@@ -218,9 +218,11 @@ class ClientService
             if ($validator->fails()) {
                 throw new Exception($validator->errors()->first(), 400);
             }
-    
-            if (!Client::where('id', $id)->exists()) {
-                throw new Exception("Cliente não encontrado", 400);
+
+            $client = Client::with('policy')->find($request->id);
+            
+            if($client->policy){
+                throw new Exception('Esse cliente já possui contrato anexado', 400);
             }
     
             $requestData = $request->all();
