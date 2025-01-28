@@ -220,6 +220,7 @@ class UserService
                 'name' => ['required', 'string', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:255'],
                 'surname' => ['required', 'string', 'max:255'],
+                'status' => ['required', 'string'],
                 'company_name' => ['required', 'string', 'max:255'],
                 'cnpj' => ['required', 'string', 'max:255'],
                 'creci' => ['required', 'string', 'max:255'],
