@@ -258,7 +258,7 @@ class ClientService
                 throw new Exception($validator->errors()->first(), 400);
             }
 
-            $policyDocument = PolicyDocument::findOrFail('id', $id);
+            $policyDocument = PolicyDocument::findOrFail($id);
     
             $requestData = $request->all();
 
