@@ -270,6 +270,22 @@ class ClientService
         }
     }    
 
+    public function deletePolicyDocument($id)
+    {
+        try {
+
+            $policyDocument = PolicyDocument::findOrFail('id', $id);
+    
+            $policyDocumentFileName = $policyDocument->filename;
+
+            $policyDocument->delete();
+    
+            return ['status' => true, 'data' => $policyDocumentFileName];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }      
+
     public function deleteAttachment($id){
         try{
             $clientAttachment = ClientAttachment::find($id);

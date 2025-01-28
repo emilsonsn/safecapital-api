@@ -39,6 +39,13 @@ class ClientController extends Controller
         if($result['status']) $result['message'] = "Apolice salva com sucesso";
         return $this->response($result);
     }
+
+    public function deletePolicyDocument($id){
+        $result = $this->clientService->deletePolicyDocument($id,);
+
+        if($result['status']) $result['message'] = "Apolice deletada com sucesso";
+        return $this->response($result);
+    }
     
     public function update(Request $request, $id){
         $result = $this->clientService->update($request, $id);
