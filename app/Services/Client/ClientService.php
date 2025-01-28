@@ -273,7 +273,6 @@ class ClientService
     public function deletePolicyDocument($id)
     {
         try {
-
             $policyDocument = PolicyDocument::findOrFail('id', $id);
     
             $policyDocumentFileName = $policyDocument->filename;

@@ -41,7 +41,7 @@ class ClientController extends Controller
     }
 
     public function deletePolicyDocument($id){
-        $result = $this->clientService->deletePolicyDocument($id,);
+        $result = $this->clientService->deletePolicyDocument($id);
 
         if($result['status']) $result['message'] = "Apolice deletada com sucesso";
         return $this->response($result);
