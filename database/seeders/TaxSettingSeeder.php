@@ -13,9 +13,14 @@ class TaxSettingSeeder extends Seeder
      */
     public function run(): void
     {
-        TaxSetting::create([
+
+        TaxSetting::where('id', '>', 0)->delete();
+        
+        $tax = [
             'percentage' => 10,
             'tax' => 150,
-        ]);
+        ];
+
+        TaxSetting::firstOrcreate($tax, $tax);
     }
 }
