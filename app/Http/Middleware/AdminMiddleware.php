@@ -23,10 +23,10 @@ class AdminMiddleware
                 case 'Admin':
                     return $next($request);
                 default:
-                    return response()->json(['error' => 'Unauthorized'], 403);
+                    return response()->json(['error' => 'Acesso não autorizado'], 403);
             }
         }
         
-        return response()->json(['error' => 'Unauthorized'], 403);
+        return response()->json(['error' => 'Acesso não autorizado'], 403);
     }
 }

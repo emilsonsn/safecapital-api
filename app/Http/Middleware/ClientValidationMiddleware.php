@@ -19,12 +19,12 @@ class ClientValidationMiddleware
     public function handle(Request $request, Closure $next): Response
     {
 
-        // $user = Auth::user();
+        $user = Auth::user();
 
-        // if($user->role === UserRoleEnum::Client->value &&
-        //  $user->validation !== UserValidationEnum::Accepted->value){
-        //     abort(403, 'Você não tem permissão para acessar esta área.');
-        // }
+        if($user->role === UserRoleEnum::Client->value &&
+         $user->validation !== UserValidationEnum::Accepted->value){
+            abort(403, 'Você não tem permissão para acessar esta área.');
+        }
 
         return $next($request);
     }

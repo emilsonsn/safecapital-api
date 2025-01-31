@@ -219,7 +219,11 @@ class ClientService
                 throw new Exception($validator->errors()->first(), 400);
             }
 
-            $client = Client::with('policy')->find($request->id);
+            $client = Client::with('policy')->find($request->client_id);
+
+            if(!isset($client)){
+                throw new Exception('Cliente não encontrado', 400);
+            }
             
             if(isset($client->policy)){
                 throw new Exception('Esse cliente já possui contrato anexado', 400);
@@ -238,6 +242,9 @@ class ClientService
             $requestData['contract_number'] = Carbon::now()->format('YmdHis');
             
             $policyDocument = PolicyDocument::create($requestData);
+
+            $client->status = ClientStatusEnum::Active->value;
+            $client->save();
     
             return ['status' => true, 'data' => $policyDocument];
         } catch (Exception $error) {

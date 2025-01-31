@@ -73,7 +73,7 @@
             {{ $justification }}
         </p>
 
-        <a class="frontUrl" href="http://localhost:4200/register">Aplicar correções</a>
+        <a class="frontUrl" href="{{ env('FRONT_URL') . '/register' }}">Aplicar correções</a>
         
         <div class="footer">
             <p>© {{ date('Y') }} {{ env('APP_NAME') }}. Todos os direitos reservados.</p>

@@ -174,6 +174,8 @@ class UserService
                 throw new Exception($validator->errors(), 400);
             }
 
+            $auth = Auth::user();
+
             $usersWithEmailOrCnpj = User::where('email', $requestData['email'])
                 ->orWhere('cnpj', $requestData['cnpj'])
                 ->count();
@@ -188,13 +190,11 @@ class UserService
                 foreach($request->attachments as $attachment){
                     $attachment = is_array($attachment) ? $attachment : json_decode($attachment, true);
                     $path = $attachment['file']->store('attachments', 'public');
-                    UserAttachment::firstOrCreate([
-                        'id' => $attachment->getClientOriginalName(),
-                    ], [
+                    UserAttachment::create( [
                         'category' => $attachment['category'],
                         'filename' => $attachment['file']->getClientOriginalName(),
                         'path' => $path,
-                        'user_id' => Auth::user()->id,
+                        'user_id' => $user->id
                     ]);
                 }
             }
@@ -220,7 +220,6 @@ class UserService
                 'name' => ['required', 'string', 'max:255'],
                 'phone' => ['nullable', 'string', 'max:255'],
                 'surname' => ['required', 'string', 'max:255'],
-                'status' => ['required', 'string'],
                 'company_name' => ['required', 'string', 'max:255'],
                 'cnpj' => ['required', 'string', 'max:255'],
                 'creci' => ['required', 'string', 'max:255'],

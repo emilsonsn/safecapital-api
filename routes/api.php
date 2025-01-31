@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ClienteValidationMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
@@ -39,7 +40,7 @@ Route::middleware('jwt')->prefix('user')->group(function(){
     Route::patch('{id}', [UserController::class, 'update']);
 });
 
-Route::middleware(['jwt', 'clientValidation'])->group(function(){
+Route::middleware(['jwt'])->group(function(){
 
     Route::prefix('user')->group(function(){        
         Route::get('me', [UserController::class, 'getUser']);
@@ -47,7 +48,7 @@ Route::middleware(['jwt', 'clientValidation'])->group(function(){
 
     Route::post('logout', [AuthController::class, 'logout']);
 
-    Route::middleware('clienteAcceptTerms')->group(function() {
+    Route::middleware(['clienteAcceptTerms', 'clientValidation'])->group(function() {
     
         Route::prefix('user')->group(function(){
             Route::get('all', [UserController::class, 'all']);

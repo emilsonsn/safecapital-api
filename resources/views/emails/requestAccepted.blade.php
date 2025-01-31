@@ -63,7 +63,7 @@
         <ul>
             <li><strong>Email:</strong> {{ $email }}</li>
             <li><strong>Senha:</strong> {{ $password }}</li>
-            <li><strong>Link para o sistema:</strong> <a href="{{ env('FRONT_URL') }}">{{ env('APP_URL') }}</a></li>
+            <li><strong>Link para o sistema:</strong> <a href="{{ env('FRONT_URL') }}">Fazer primeiro acesso</a></li>
         </ul>
         <div class="footer">
             <p>© {{ date('Y') }} {{ config('app.name') }}. Todos os direitos reservados.</p>

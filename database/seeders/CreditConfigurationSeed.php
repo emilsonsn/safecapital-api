@@ -22,12 +22,26 @@ class CreditConfigurationSeed extends Seeder
                 'status' => 'Approved',
             ],
             [
-                'description' => 'Aprovado',
-                'start_score' => 601,
-                'end_score' => 1000,
+                'description' => 'Pendente',
+                'start_score' => 401,
+                'end_score' => 600,
                 'has_pending_issues' => true,
                 'status' => 'Pending',
             ],            
+            [
+                'description' => 'Reprovado - Apenas score',
+                'start_score' => 400,
+                'end_score' => 0,
+                'has_pending_issues' => false,
+                'status' => 'Disapproved',
+            ],
+            [
+                'description' => 'Reprovado -  Score e pendências',
+                'start_score' => 400,
+                'end_score' => 0,
+                'has_pending_issues' => true,
+                'status' => 'Disapproved',
+            ],
         ];
 
         foreach ($configurations as $configuration) {
