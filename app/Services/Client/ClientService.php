@@ -243,7 +243,7 @@ class ClientService
             
             $policyDocument = PolicyDocument::create($requestData);
 
-            $client->status = ClientStatusEnum::Active->value;
+            $client->status = ClientStatusEnum::AwaitingAnalisy->value;
             $client->save();
     
             return ['status' => true, 'data' => $policyDocument];

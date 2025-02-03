@@ -18,6 +18,7 @@ return new class extends Migration
                 'Disapproved',
                 'WaitingPayment',
                 'WaitingContract',
+                'AwaitingAnalisy',
                 'Active',
                 'Inactive'
             ])->change();
@@ -34,6 +35,10 @@ return new class extends Migration
                 'Approved',
                 'Pending',
                 'Disapproved',
+                'WaitingPayment',
+                'WaitingContract',
+                'Active',
+                'Inactive'
             ])->change();
         });
     }
