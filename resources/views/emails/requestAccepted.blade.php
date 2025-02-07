@@ -65,6 +65,10 @@
             <li><strong>Senha:</strong> {{ $password }}</li>
             <li><strong>Link para o sistema:</strong> <a href="{{ env('FRONT_URL') }}">Fazer primeiro acesso</a></li>
         </ul>
+
+        <p>
+            Em anexo consta nossos termos de aceite e policitas de privacidade.
+        </p>
         <div class="footer">
             <p>© {{ date('Y') }} {{ config('app.name') }}. Todos os direitos reservados.</p>
         </div>

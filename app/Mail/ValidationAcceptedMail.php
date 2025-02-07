@@ -36,6 +36,7 @@ class ValidationAcceptedMail extends Mailable
                         'email' => $this->email,
                         'password' => $this->password,
                     ])
-                    ->subject('Sua solicitação foi aceita!');
+                    ->subject('Sua solicitação foi aceita!')
+                    ->attach(base_path('resources/docs/termo_de_aceite_versao_1.0.pdf'));
     }
 }
