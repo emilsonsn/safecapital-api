@@ -3,11 +3,14 @@
 namespace App\Services\Solicitation;
 
 use App\Enums\UserRoleEnum;
+use App\Helpers\Helpers;
+use App\Mail\DefaultMail;
 use App\Models\Solicitation;
 use App\Models\SolicitationMessage;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Mail;
 
 class SolicitationService
 {
@@ -76,13 +79,15 @@ class SolicitationService
                 'subject' => ['required', 'string', 'max:255'],
                 'status' => ['required', 'string', 'in:Received,UnderAnalysis,Awaiting,PaymentProvisioned,Completed'],
                 'category' => ['required', 'string'],
+                'attachments' => ['nullable', 'array'],
+                'attachments.*' => ['required', 'array'],
             ];
             
-            $userId = Auth::user()->id;
+            $user = Auth::user()->id;
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = $userId;
+            $requestData['user_id'] = $user->id;
 
             $validator = Validator::make($requestData, $rules);
 
@@ -91,6 +96,21 @@ class SolicitationService
             }
 
             $solicitation = Solicitation::create($requestData);
+
+            $adminAndManagers = Helpers::getAdminAndManagerUsers();
+
+            if(count($adminAndManagers)){
+                $message = "Cliente: {$user->name} criou uma novo chamado.";
+                $subjetc = "Novo chamado criado";
+                foreach($adminAndManagers as $adminorManager){
+                    Mail::to($adminorManager->user)
+                        ->send(new DefaultMail(
+                            $adminorManager->name,
+                            $message,
+                            $subjetc 
+                        ));
+                }
+            }
 
             return ['status' => true, 'data' => $solicitation];
         } catch (Exception $error) {
@@ -107,11 +127,11 @@ class SolicitationService
                 'solicitation_id' => ['required', 'integer'],
             ];
 
-            $userId = Auth::user()->id;
+            $user = Auth::user();
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = $userId;
+            $requestData['user_id'] = $user->id;
 
             $validator = Validator::make($requestData, $rules);
 
@@ -130,6 +150,25 @@ class SolicitationService
 
             $solicitation = SolicitationMessage::create($requestData);
 
+            if($user->role === 'Client'){
+                $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
+            }else{
+                $usersToReceiveEmail = [ $user ];
+            }
+
+            if(count($usersToReceiveEmail)){
+                $message = "{$user->name} adicionou uma mensagem em seu chamado.";
+                $subjetc = "Nova mensagem adicionada no chamado";
+                foreach($usersToReceiveEmail as $userToReceiveEmail){
+                    Mail::to($userToReceiveEmail->user)
+                        ->send(new DefaultMail(
+                            $userToReceiveEmail->name,
+                             $message,
+                            $subjetc 
+                        ));
+                }
+            }
+            
             return ['status' => true, 'data' => $solicitation];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];

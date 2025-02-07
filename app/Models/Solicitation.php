@@ -30,4 +30,8 @@ class Solicitation extends Model
     public function messages(){
         return $this->hasMany(SolicitationMessage::class)->with('user');
     }
+
+    public function attachments(){
+        return $this->hasMany(SolicitationAttachment::class);
+    }
 }

@@ -14,7 +14,7 @@ class UserSeed extends Seeder
     public function run(): void
     {
         
-        User::firstOrCreate([
+        User::updateOrCreate([
             'email' => 'admin@admin',
         ],
         [
@@ -30,7 +30,7 @@ class UserSeed extends Seeder
             'role' => 'Admin',
         ]);
 
-        User::firstOrCreate([
+        User::updateOrCreate([
             'email' => 'user@user',
         ],
         [
@@ -43,7 +43,7 @@ class UserSeed extends Seeder
             'creci' => null,
             'is_active' => true,
             'validation' => null,
-            'role' => 'Client',
+            'role' => 'Manager',
         ]);
     }
 }

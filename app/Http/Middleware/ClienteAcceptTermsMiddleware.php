@@ -18,11 +18,11 @@ class ClienteAcceptTermsMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // $user = User::find(Auth::user()->id);
+        $user = User::find(Auth::user()->id);
 
-        // if($user->role === UserRoleEnum::Client->value && !isset($user->terms)){
-        //     abort(403, 'Você não tem permissão para acessar esta área.');
-        // }
+        if($user->role === UserRoleEnum::Client->value && !isset($user->terms)){
+            abort(403, 'Você não tem permissão para acessar esta área.');
+        }
 
         return $next($request);    }
 }

@@ -311,7 +311,11 @@ class UserService
                 $userToUpdate->is_active = true;
                 $userToUpdate->save();
                 Mail::to($userToUpdate->email)
-                    ->send(new ValidationAcceptedMail($userToUpdate->name, $userToUpdate->email, $password));
+                    ->send(new ValidationAcceptedMail(
+                        $userToUpdate->name,
+                        $userToUpdate->email,
+                        $password)
+                    );
             }
 
             if($request->validation == UserValidationEnum::Return->value){

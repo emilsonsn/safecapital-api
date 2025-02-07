@@ -3,6 +3,8 @@
 namespace App\Services\Client;
 
 use App\Enums\ClientStatusEnum;
+use App\Helpers\Helpers;
+use App\Mail\DefaultMail;
 use App\Models\Client;
 use App\Models\ClientAttachment;
 use App\Models\PolicyDocument;
@@ -12,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Mail;
 
 class ClientService
 {
@@ -199,6 +202,21 @@ class ClientService
             $client->status = ClientStatusEnum::WaitingPayment->value;
             $client->save();
 
+            $auth = Auth::user();
+
+            $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
+
+            $message = "Cliente {$client->name} foi aceito pelo parceiro {$auth->name}.";
+            $subjetc = "Novo cliente aceito";
+            foreach($usersToReceiveEmail as $userToReceiveEmail){
+                Mail::to($userToReceiveEmail->user)
+                    ->send(new DefaultMail(
+                        $userToReceiveEmail->name,
+                         $message,
+                        $subjetc 
+                    ));
+            }
+            
             return ['status' => true, 'data' => $client];
         }catch(Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
@@ -243,8 +261,23 @@ class ClientService
             
             $policyDocument = PolicyDocument::create($requestData);
 
-            $client->status = ClientStatusEnum::AwaitingAnalisy->value;
+            $client->status = ClientStatusEnum::WaitingAnalisy->value;
             $client->save();
+
+            $auth = Auth::user();
+
+            $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
+
+            $message = "Contrato do cliente {$client->name} anexado pelo parceiro {$auth->name}.";
+            $subjetc = "Contrato anexado";
+            foreach($usersToReceiveEmail as $userToReceiveEmail){
+                Mail::to($userToReceiveEmail->user)
+                    ->send(new DefaultMail(
+                        $userToReceiveEmail->name,
+                         $message,
+                        $subjetc 
+                    ));
+            }
     
             return ['status' => true, 'data' => $policyDocument];
         } catch (Exception $error) {
@@ -285,6 +318,10 @@ class ClientService
             $policyDocumentFileName = $policyDocument->filename;
 
             $policyDocument->delete();
+
+            $client = $policyDocument->client();
+            $client->status = ClientStatusEnum::WaitingContract->value;
+            $client->save();
     
             return ['status' => true, 'data' => $policyDocumentFileName];
         } catch (Exception $error) {
