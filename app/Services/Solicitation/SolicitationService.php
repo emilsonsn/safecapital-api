@@ -84,7 +84,7 @@ class SolicitationService
                 'attachments.*' => ['required', 'array'],
             ];
             
-            $user = Auth::user()->id;
+            $user = Auth::user();
 
             $requestData = $request->all();
 
