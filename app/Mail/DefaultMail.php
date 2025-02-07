@@ -10,18 +10,18 @@ class DefaultMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $name;
-    public $message;
-    public $subjetc;
+    public $userName;
+    public $messageText;
+    public $subjetcText;
 
     /**
      * Create a new message instance.
      */
     public function __construct($name, $message, $subjetc)
     {
-        $this->name = $name;
-        $this->message = $message;
-        $this->subjetc = $subjetc;
+        $this->userName = $name;
+        $this->messageText = $message;
+        $this->subjetcText = $subjetc;
     }
 
     /**
@@ -30,11 +30,11 @@ class DefaultMail extends Mailable
     
     public function build()
     {
-        return $this->view('emails.default_email')
+        return $this->view('emails.defaultEmail')
                     ->with([
-                        'name' => $this->name,
-                        'message' => $this->message,
+                        'name' => $this->userName,
+                        'message' => $this->messageText,
                     ])
-                    ->subject($this->subjetc);
+                    ->subject($this->subjetcText);
     }
 }

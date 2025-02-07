@@ -115,10 +115,10 @@ class SolicitationService
             if(count($adminAndManagers)){
                 $message = "Cliente: {$user->name} criou uma novo chamado.";
                 $subjetc = "Novo chamado criado";
-                foreach($adminAndManagers as $adminorManager){
-                    Mail::to($adminorManager->user)
+                foreach($adminAndManagers as $adminOrManager){
+                    Mail::to($adminOrManager->email)
                         ->send(new DefaultMail(
-                            $adminorManager->name,
+                            $adminOrManager->name,
                             $message,
                             $subjetc 
                         ));
@@ -173,7 +173,7 @@ class SolicitationService
                 $message = "{$user->name} adicionou uma mensagem em seu chamado.";
                 $subjetc = "Nova mensagem adicionada no chamado";
                 foreach($usersToReceiveEmail as $userToReceiveEmail){
-                    Mail::to($userToReceiveEmail->user)
+                    Mail::to($userToReceiveEmail->email)
                         ->send(new DefaultMail(
                             $userToReceiveEmail->name,
                              $message,
