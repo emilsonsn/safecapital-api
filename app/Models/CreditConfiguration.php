@@ -20,7 +20,9 @@ class CreditConfiguration extends Model
         'description',
         'start_score',
         'end_score',
+        'has_law_processes',
         'has_pending_issues',
+        'min_pending_value',
         'status',
     ];
 }
