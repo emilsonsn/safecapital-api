@@ -6,6 +6,7 @@ use App\Enums\UserRoleEnum;
 use App\Helpers\Helpers;
 use App\Mail\DefaultMail;
 use App\Models\Solicitation;
+use App\Models\SolicitationAttachment;
 use App\Models\SolicitationMessage;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -96,6 +97,20 @@ class SolicitationService
             }
 
             $solicitation = Solicitation::create($requestData);
+
+            if($request->filled('attachments')){
+                foreach($request->attachments as $attachment){
+                    $path = $attachment['file']->store('attachments', 'public');
+                    SolicitationAttachment::firstOrCreate([
+                        'id' => $attachment['id'] ?? null,
+                    ], [
+                        'description' => $attachment['description'],
+                        'filename' => $attachment['file']->getClientOriginalName(),
+                        'path' => $path,
+                        'solicitation_id' => $solicitation->id,
+                    ]);
+                }
+            }
 
             $adminAndManagers = Helpers::getAdminAndManagerUsers();
 
