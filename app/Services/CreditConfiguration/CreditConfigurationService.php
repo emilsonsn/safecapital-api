@@ -47,7 +47,7 @@ class CreditConfigurationService
                 'end_score' => ['required', 'integer'],
                 'has_pending_issues' => ['required', 'boolean'],
                 'has_law_processes' => ['required', 'boolean'],
-                'min_pending_value' => ['nullable', 'numeric'],
+                'max_pending_value' => ['nullable', 'numeric'],
                 'status' => ['required', 'in:Pending,Approved,Disapproved'],
             ];     
 
@@ -76,7 +76,7 @@ class CreditConfigurationService
                 'end_score' => ['required', 'integer'],
                 'has_law_processes' => ['required', 'boolean'],
                 'has_pending_issues' => ['required', 'boolean'],
-                'min_pending_value' => ['nullable', 'numeric'],
+                'max_pending_value' => ['nullable', 'numeric'],
                 'status' => ['required', 'in:Pending,Approved,Disapproved'],
             ];     
 

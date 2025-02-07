@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\CreditConfiguration;
 use App\Models\User;
 
 class Helpers {
@@ -11,5 +12,9 @@ class Helpers {
             'manager'])
         ->get()
         ->all();
+    }
+
+    public static function getCreditSettings(): array{
+        return CreditConfiguration::get()->all();
     }
 }

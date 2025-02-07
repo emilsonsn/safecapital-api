@@ -50,4 +50,8 @@ class Client extends Model
     public function policy(){
         return $this->hasOne(PolicyDocument::class);
     }
+
+    public function analisys(){
+        return $this->hasOne(ClientPh3Analisy::class);
+    }
 }

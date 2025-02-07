@@ -7,7 +7,9 @@ use App\Helpers\Helpers;
 use App\Mail\DefaultMail;
 use App\Models\Client;
 use App\Models\ClientAttachment;
+use App\Models\ClientPh3Analisy;
 use App\Models\PolicyDocument;
+use App\Traits\PH3Trait;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -18,6 +20,8 @@ use Mail;
 
 class ClientService
 {
+
+    use PH3Trait;
 
     public function search($request)
     {
@@ -108,6 +112,9 @@ class ClientService
                     ]);
                 }
             }
+
+            $ph3Result = $this->searchClienteInPH3($client);
+            $this->analizeClient($client, $ph3Result);
 
             return ['status' => true, 'data' => $client];
         } catch (Exception $error) {
@@ -209,7 +216,7 @@ class ClientService
             $message = "Cliente {$client->name} foi aceito pelo parceiro {$auth->name}.";
             $subjetc = "Novo cliente aceito";
             foreach($usersToReceiveEmail as $userToReceiveEmail){
-                Mail::to($userToReceiveEmail->user)
+                Mail::to($userToReceiveEmail->email)
                     ->send(new DefaultMail(
                         $userToReceiveEmail->name,
                          $message,
@@ -271,7 +278,7 @@ class ClientService
             $message = "Contrato do cliente {$client->name} anexado pelo parceiro {$auth->name}.";
             $subjetc = "Contrato anexado";
             foreach($usersToReceiveEmail as $userToReceiveEmail){
-                Mail::to($userToReceiveEmail->user)
+                Mail::to($userToReceiveEmail->email)
                     ->send(new DefaultMail(
                         $userToReceiveEmail->name,
                          $message,
@@ -342,5 +349,69 @@ class ClientService
         }catch(Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
+    }
+
+    private function searchClienteInPH3(Client $client){
+        $cpfOrCnpj = $client->cpf;
+        $this->preparePh3();
+        $response = $this->searchClientForCpfOrCnpj($cpfOrCnpj);
+
+        if(!isset($response)) return;
+
+        ClientPh3Analisy::create([
+            'client_id' => $client->id,
+            'response' => json_encode($response)
+        ]);
+
+        return $response;
+    }
+
+    private function analizeClient($client, $ph3Response)
+    {
+        $settings = Helpers::getCreditSettings();
+    
+        if (!$ph3Response || !isset($ph3Response['CreditScore'])) {
+            $client->status = ClientStatusEnum::Pending;
+            $client->save();
+            return;
+        }
+    
+        $creditScore = $ph3Response['CreditScore']['D00'] ?? 0;
+        $hasLawProcesses = $ph3Response['ProcessNumber'] ?? 0; 
+        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']) > 0;
+        $maxPendingValue = collect($ph3Response['Debits'])->sum('CurrentQuantity');
+    
+        $approvedConfig = collect($settings)->first(function ($setting) use ($creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue) {
+            return $setting['status'] === ClientStatusEnum::Approved->value &&
+                   $creditScore >= $setting['start_score'] &&
+                   $creditScore <= $setting['end_score'] &&
+                   ($setting['has_law_processes'] == false || $hasLawProcesses == 0) &&
+                   ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
+                   ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
+        });
+    
+        if ($approvedConfig) {
+            $client->status = ClientStatusEnum::Approved;
+            $client->save();
+            return;
+        }
+    
+        $pendingConfig = collect($settings)->first(function ($setting) use ($creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue) {
+            return $setting['status'] === ClientStatusEnum::Pending->value &&
+                   $creditScore >= $setting['start_score'] &&
+                   $creditScore <= $setting['end_score'] &&
+                   ($setting['has_law_processes'] == false || $hasLawProcesses == 0) &&
+                   ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
+                   ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
+        });
+    
+        if ($pendingConfig) {
+            $client->status = ClientStatusEnum::Pending;
+            $client->save();
+            return;
+        }
+    
+        $client->status = ClientStatusEnum::Disapproved;
+        $client->save();
     }
 }

@@ -12,10 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('credit_configurations', function (Blueprint $table) {
-            $table->boolean('has_law_processes')->after('end_score');
-            $table->decimal('min_pending_value')
-                ->nullable()
-                ->after('has_pending_issues');
+            $table->renameColumn('max_pending_value', 'max_pending_value');
         });
     }
 
@@ -25,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('credit_configurations', function (Blueprint $table) {
-            $table->dropColumn('has_law_processes');
-            $table->dropColumn('max_pending_value');
+            $table->renameColumn('max_pending_value', 'max_pending_value');
         });
     }
 };
