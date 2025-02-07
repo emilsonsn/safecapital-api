@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('solicitation_id');
             $table->string('path');
+            $table->string('description');
+            $table->string('filename');
             $table->timestamps();
             $table->softDeletes();
         });
