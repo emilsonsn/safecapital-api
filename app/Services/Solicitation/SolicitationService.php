@@ -25,7 +25,7 @@ class SolicitationService
             $category = $request->category;            
             $user_id = $request->user_id;
 
-            $solicitations = Solicitation::with('messages', 'user')
+            $solicitations = Solicitation::with('messages', 'user', 'attachments')
                 ->orderBy('id', 'desc');
 
             if(isset($search_term)){
