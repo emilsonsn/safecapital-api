@@ -98,7 +98,7 @@ class SolicitationService
 
             $solicitation = Solicitation::create($requestData);
 
-            if($request->filled('attachments')){
+            if($request->filled('attachments') && count($request->attachments)){
                 foreach($request->attachments as $attachment){
                     $path = $attachment['file']->store('attachments', 'public');
                     SolicitationAttachment::firstOrCreate([
