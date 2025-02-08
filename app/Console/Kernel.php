@@ -12,6 +12,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        $schedule->command("app:verify-payment")
+            ->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->onOneServer()
+            ->timeout(600);
     }
 
     /**
