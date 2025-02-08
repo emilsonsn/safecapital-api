@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('credit_configurations', function (Blueprint $table) {
-            $table->renameColumn('max_pending_value', 'max_pending_value');
+            $table->renameColumn('min_pending_value', 'max_pending_value');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('credit_configurations', function (Blueprint $table) {
-            $table->renameColumn('max_pending_value', 'max_pending_value');
+            $table->renameColumn('max_pending_value', 'min_pending_value');
         });
     }
 };
