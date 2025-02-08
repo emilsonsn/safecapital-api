@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\ClienteValidationMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -94,5 +95,8 @@ Route::middleware(['jwt'])->group(function(){
             Route::delete('{id}', [ClientController::class, 'delete']);        
         });
     });
+});
 
+Route::prefix('webhook')->group(function () {
+    Route::post('payment', [WebhookController::class, 'handleWebhook']);
 });

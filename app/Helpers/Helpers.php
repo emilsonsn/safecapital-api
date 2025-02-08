@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\CreditConfiguration;
+use App\Models\TaxSetting;
 use App\Models\User;
 
 class Helpers {
@@ -16,5 +17,9 @@ class Helpers {
 
     public static function getCreditSettings(): array{
         return CreditConfiguration::get()->all();
+    }
+
+    public static function getTaxSettings(): TaxSetting{
+        return TaxSetting::first();
     }
 }

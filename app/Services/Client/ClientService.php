@@ -5,10 +5,13 @@ namespace App\Services\Client;
 use App\Enums\ClientStatusEnum;
 use App\Helpers\Helpers;
 use App\Mail\DefaultMail;
+use App\Mail\PaymentMail;
 use App\Models\Client;
 use App\Models\ClientAttachment;
+use App\Models\ClientPayment;
 use App\Models\ClientPh3Analisy;
 use App\Models\PolicyDocument;
+use App\Traits\MercadoPagoTrait;
 use App\Traits\PH3Trait;
 use Carbon\Carbon;
 use Exception;
@@ -16,13 +19,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Log;
 use Mail;
 
 class ClientService
 {
 
-    use PH3Trait;
-
+    use PH3Trait, MercadoPagoTrait;
+    
     public function search($request)
     {
         try {
@@ -211,7 +215,7 @@ class ClientService
 
             $auth = Auth::user();
 
-            $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
+            $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();            
 
             $message = "Cliente {$client->name} foi aceito pelo parceiro {$auth->name}.";
             $subjetc = "Novo cliente aceito";
@@ -223,6 +227,22 @@ class ClientService
                         $subjetc 
                     ));
             }
+
+            $taxSetting = Helpers::getTaxSettings();
+
+            $payment = $this->createPayment($client, $taxSetting);
+
+            $paymentUrl = $payment['point_of_interaction']['transaction_data']['ticket_url'];
+
+            $subjetc = "Pagamento de taxa do seguro";
+
+            Mail::to($client->email)
+                ->send(new PaymentMail(
+                    $client->name,
+                    $taxSetting->tax,
+                    $paymentUrl,
+                    $subjetc 
+                ));
             
             return ['status' => true, 'data' => $client];
         }catch(Exception $error) {
@@ -413,5 +433,31 @@ class ClientService
     
         $client->status = ClientStatusEnum::Disapproved;
         $client->save();
+    }
+
+    private function createPayment($client, $taxSetting){
+
+        $this->prepareMercadoPago(
+            $client->email,
+            $taxSetting->tax
+        );
+
+        $payment = $this->makePayment();
+
+        if(!isset($payment['point_of_interaction']['transaction_data']['ticket_url'])){
+            Log::error(json_encode($payment));
+            throw new Exception('Falha ao gerar pagamento');
+        }
+
+        ClientPayment::create([
+            'external_id' => $payment['id'],
+            'client_id' => $client->id,
+            'status' => $payment['status'],
+            'url' => $payment['point_of_interaction']['transaction_data']['ticket_url'],
+            'transaction_amount' => $payment['transaction_amount'],
+            'payer' => json_encode($payment['payer']),
+        ]);
+
+        return $payment;
     }
 }
