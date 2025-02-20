@@ -214,7 +214,10 @@ class UserService
     public function update($request, $id)
     {
         try {
-            $request['is_active'] = $request['is_active'] == 'true' ? true : false;
+            $request['is_active'] = in_array($request['is_active'], [
+                '1',
+                'true'
+            ]) == '1' ? true : false;
 
             $rules = [
                 'name' => ['required', 'string', 'max:255'],
