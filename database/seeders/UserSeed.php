@@ -13,7 +13,6 @@ class UserSeed extends Seeder
      */
     public function run(): void
     {
-        
         User::updateOrCreate([
             'email' => 'admin@admin',
         ],
@@ -28,22 +27,6 @@ class UserSeed extends Seeder
             'is_active' => true,
             'validation' => null,
             'role' => 'Admin',
-        ]);
-
-        User::updateOrCreate([
-            'email' => 'user@user',
-        ],
-        [
-            'name' => 'Colaborador',
-            'surname' => 'do sistema',
-            'phone' => '83991236636',
-            'company_name' => 'TechSoul',
-            'password' => Hash::make('user'),
-            'cnpj' => '50774377000179',
-            'creci' => null,
-            'is_active' => true,
-            'validation' => null,
-            'role' => 'Manager',
         ]);
     }
 }
