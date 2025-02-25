@@ -12,16 +12,14 @@ class ValidationAcceptedMail extends Mailable
 
     public $name;
     public $email;
-    public $password;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($name, $email, $password)
+    public function __construct($name, $email)
     {
         $this->name = $name;
         $this->email = $email;
-        $this->password = $password;
     }
 
     /**
@@ -34,7 +32,6 @@ class ValidationAcceptedMail extends Mailable
                     ->with([
                         'name' => $this->name,
                         'email' => $this->email,
-                        'password' => $this->password,
                     ])
                     ->subject('Sua solicitação foi aceita!')
                     ->attach(base_path('resources/docs/termo_de_aceite_versao_1.0.pdf'));

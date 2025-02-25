@@ -59,10 +59,8 @@
     <div class="email-container">
         <h1>Seja bem-vindo, <strong>{{ $name }}</strong>! Sua solicitação de cadastro foi aceita!</h1>
         <p>Agora você já pode acessar seu ambiente no nosso sistema.</p>
-        <p>Segue suas novas credenciais de acesso:</p>
+        <p>Para ter acesso user seu email e senha criados no cadastro</p>
         <ul>
-            <li><strong>Email:</strong> {{ $email }}</li>
-            <li><strong>Senha:</strong> {{ $password }}</li>
             <li><strong>Link para o sistema:</strong> <a href="{{ env('FRONT_URL') }}">Fazer primeiro acesso</a></li>
         </ul>
 
