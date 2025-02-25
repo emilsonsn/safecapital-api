@@ -309,16 +309,17 @@ class UserService
             $userToUpdate->update($requestData);
 
             if($request->validation == UserValidationEnum::Accepted->value){
-                $password = Str::random(20);
-                $userToUpdate->password = Hash::make($password);
+                // $password = Str::random(20);
+                // $userToUpdate->password = Hash::make($password);
                 $userToUpdate->is_active = true;
                 $userToUpdate->save();
                 Mail::to($userToUpdate->email)
                     ->send(new ValidationAcceptedMail(
                         $userToUpdate->name,
                         $userToUpdate->email,
-                        $password)
-                    );
+                        // $password
+                    )
+                );
             }
 
             if($request->validation == UserValidationEnum::Return->value){

@@ -45,6 +45,7 @@ Route::middleware(['jwt'])->group(function(){
 
     Route::prefix('user')->group(function(){        
         Route::get('me', [UserController::class, 'getUser']);
+        Route::post('accept-term', [UserController::class, 'AcceptTerm']);
     });
 
     Route::post('logout', [AuthController::class, 'logout']);
@@ -55,7 +56,6 @@ Route::middleware(['jwt'])->group(function(){
             Route::get('all', [UserController::class, 'all']);
             Route::get('search', [UserController::class, 'search']);
             Route::get('cards', [UserController::class, 'cards']);
-            Route::post('accept-term', [UserController::class, 'AcceptTerm']);
             Route::delete('{id}', [UserController::class, 'delete']);
             Route::delete('attachment/{id}', [UserController::class, 'deleteAttachment']);        
             Route::patch('validation/{id}', [UserController::class, 'validation']);
