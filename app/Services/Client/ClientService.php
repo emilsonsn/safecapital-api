@@ -3,6 +3,7 @@
 namespace App\Services\Client;
 
 use App\Enums\ClientStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Helpers\Helpers;
 use App\Mail\DefaultMail;
 use App\Mail\PaymentMail;
@@ -33,7 +34,8 @@ class ClientService
             $perPage = $request->input('take', 10);
             $search_term = $request->search_term;
             $status = $request->status;
-            $status = $request->user_id;
+            $user_id = $request->user_id;
+            $auth = Auth::user();
 
             $clients = Client::with('attachments', 'policy')
                 ->orderBy('id', 'desc');
@@ -52,8 +54,10 @@ class ClientService
                 $clients->where('status', $status);
             }
 
-            if(isset($user_id)){
+            if(isset($user_id) && $auth->role == UserRoleEnum::Admin->value ){
                 $clients->where('user_id', $user_id);
+            }else{
+                $clients->where('user_id', $auth->id);
             }
 
             $clients = $clients->paginate($perPage);
