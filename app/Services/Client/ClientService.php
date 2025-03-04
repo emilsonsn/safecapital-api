@@ -54,9 +54,9 @@ class ClientService
                 $clients->where('status', $status);
             }
 
-            if(isset($user_id) && $auth->role == UserRoleEnum::Admin->value ){
+            if(isset($user_id) && $auth->role == UserRoleEnum::Admin->value){
                 $clients->where('user_id', $user_id);
-            }else{
+            }else if ($auth->role != UserRoleEnum::Admin->value){
                 $clients->where('user_id', $auth->id);
             }
 
