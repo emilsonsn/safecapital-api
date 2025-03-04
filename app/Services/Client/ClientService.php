@@ -398,9 +398,9 @@ class ClientService
     
         $creditScore = $ph3Response['CreditScore']['D00'] ?? 0;
         $hasLawProcesses = $ph3Response['ProcessNumber'] ?? 0; 
-        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']) > 0;
-        $maxPendingValue = collect($ph3Response['Debits'])->sum('CurrentQuantity');
-    
+        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']) > 0;        
+        $maxPendingValue =  $hasPendingIssues ? collect($ph3Response['Debits'])->sum('CurrentQuantity') : 0;
+            
         $approvedConfig = collect($settings)->first(function ($setting) use ($creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue) {
             return $setting['status'] === ClientStatusEnum::Approved->value &&
                    $creditScore >= $setting['start_score'] &&
