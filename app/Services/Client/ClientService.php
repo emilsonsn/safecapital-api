@@ -237,9 +237,9 @@ class ClientService
 
             $payment = $this->createPayment($client, $taxSetting);
 
-            $paymentUrl = $payment['point_of_interaction']['transaction_data']['ticket_url'];
+            $paymentUrl = $payment['init_point'];
 
-            $subjetc = "Pagamento de taxa do seguro";
+            $subjetc = "Safe Capital - Taxa do seguro";
 
             Mail::to($client->email)
                 ->send(new PaymentMail(

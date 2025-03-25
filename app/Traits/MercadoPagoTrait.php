@@ -34,7 +34,7 @@ trait MercadoPagoTrait
                 ],
                 'json' => [
                     'transaction_amount' => $this->value,
-                    'description' => 'Pagamento do Contrato',
+                    'description' => 'Taxa do seguro',
                     'payment_method_id' => 'pix',
                     'payer' => [
                         'email' => $this->clientEmail,
