@@ -3,6 +3,7 @@
 namespace App\Services\Client;
 
 use App\Enums\ClientStatusEnum;
+use App\Enums\PaymentStatus;
 use App\Enums\UserRoleEnum;
 use App\Helpers\Helpers;
 use App\Mail\DefaultMail;
@@ -448,18 +449,18 @@ class ClientService
 
         $payment = $this->makePayment();
 
-        if(!isset($payment['point_of_interaction']['transaction_data']['ticket_url'])){
-            Log::error(json_encode($payment));
+        if(!isset($payment['init_point'])){
+            Log::error('Erro no pagamento', $payment);
             throw new Exception('Falha ao gerar pagamento');
         }
 
         ClientPayment::create([
             'external_id' => $payment['id'],
             'client_id' => $client->id,
-            'status' => $payment['status'],
-            'url' => $payment['point_of_interaction']['transaction_data']['ticket_url'],
-            'transaction_amount' => $payment['transaction_amount'],
-            'payer' => json_encode($payment['payer']),
+            'status' => PaymentStatus::Pending->value,
+            'url' => $payment['init_point'],
+            'transaction_amount' => $payment['items'][0]['unit_price'] ?? 0,
+            'payer' => json_encode($payment['payer'] ?? []),
         ]);
 
         return $payment;

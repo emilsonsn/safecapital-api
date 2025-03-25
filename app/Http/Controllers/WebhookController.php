@@ -15,10 +15,18 @@ class WebhookController extends Controller
         try {
             Log::info('Webhook recebido:', $request->all());
 
+            if ($request->type !== 'payment') {
+                return response()->json(
+                    data: ['message' => 'Ignorado - tipo diferente de payment'],
+                    status: 200
+                );
+            }            
+
             if (!isset($request->data['id'])) {
-                return response()->json([
-                    'error' => 'ID de pagamento não encontrado'
-                ], 400);
+                return response()->json(
+                    data: ['error' => 'ID de pagamento não encontrado'],
+                    status: 400
+                );
             }
 
             $paymentId = $request->data['id'];
@@ -40,11 +48,16 @@ class WebhookController extends Controller
             $clientPayment->status = $payment['status'];
             $clientPayment->save();
 
-            if ($payment['status'] === 'approved'){
-                $clientPayment->client->status = ClientStatusEnum::WaitingContract->value;
-                $clientPayment->client->save();
+            if ($payment['status'] !== 'approved'){
+                return response()->json(
+                    data: ['message' => "Pagamento não aprovado"],
+                    status: 200
+                );
             }
 
+            $clientPayment->client->status = ClientStatusEnum::WaitingContract->value;
+            $clientPayment->client->save();
+            
             return response()->json(['success' => true], 200);
         } catch (Exception $e) {
             Log::error('Erro no webhook do Mercado Pago: ' . $e->getMessage());

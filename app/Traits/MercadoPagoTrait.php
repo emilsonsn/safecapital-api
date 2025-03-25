@@ -24,7 +24,7 @@ trait MercadoPagoTrait
     {
         $client = new Client();
         $url = "https://api.mercadopago.com/v1/payments";
-
+    
         try {
             $response = $client->post($url, [
                 'headers' => [
@@ -34,23 +34,24 @@ trait MercadoPagoTrait
                 ],
                 'json' => [
                     'transaction_amount' => $this->value,
+                    'description' => 'Pagamento do Contrato',
                     'payment_method_id' => 'pix',
                     'payer' => [
                         'email' => $this->clientEmail,
                     ],
                 ],
             ]);
-
+    
             $data = json_decode($response->getBody()->getContents(), true);
-
+    
             return $data;
-
+    
         } catch (RequestException $e) {
             $errorResponse = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true) : [];
-
+    
             Log::error('Erro ao criar pagamento: ' . $e->getMessage());
             Log::error('Detalhes do erro: ' . json_encode($errorResponse, JSON_PRETTY_PRINT));
-
+    
             return [
                 'error' => 'Erro ao criar pagamento',
                 'details' => $e->getMessage(),
@@ -58,4 +59,5 @@ trait MercadoPagoTrait
             ];
         }
     }
+        
 }
