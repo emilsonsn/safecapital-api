@@ -59,7 +59,7 @@
     <div class="email-container">
         <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem?</h1>
         <p>Recebemos sua solicitação de cadastro e iremos avaliar os dados e documentos inseridos.</p>
-        <p>Em breve você vocẽ receberá outro email com a resposta da validação. Esse processo pode levar até 3 dias.</p>
+        <p>Em breve você receberá outro email com a resposta da validação. Esse processo pode levar até 3 dias.</p>
         
         <div class="footer">
             <p>© {{ date('Y') }} {{ env('APP_NAME') }}. Todos os direitos reservados.</p>

@@ -158,15 +158,10 @@ class UserService
                 'is_active' => ['required', 'boolean'],
                 'role' => ['required', 'in:Admin,Manager,Client'],
                 'attachments' => ['nullable', 'array'],
-                'password' => ['nullable', 'string'],
+                'password' => ['required', 'string'],
             ];
 
             $requestData = $request->all();
-
-            if(!isset($requestData['password'])){
-                $password = str_shuffle(Str::upper(Str::random(1)) . rand(0, 9) . Str::random(1, '?!@#$%^&*') . Str::random(5));
-                $requestData['password'] = Hash::make($password);
-            }
                 
             $validator = Validator::make($requestData, $rules);
     
