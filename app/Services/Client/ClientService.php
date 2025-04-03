@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Log;
 use Mail;
+use Illuminate\Support\Str;
 
 class ClientService
 {
@@ -215,23 +216,7 @@ class ClientService
 
             if(!$client) throw new Exception('Cliente não encontrado');
 
-            $client->status = ClientStatusEnum::WaitingPayment->value;
-            $client->save();
-
             $auth = Auth::user();
-
-            $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();            
-
-            $message = "Cliente {$client->name} foi aceito pelo parceiro {$auth->name}.";
-            $subjetc = "Novo cliente aceito";
-            foreach($usersToReceiveEmail as $userToReceiveEmail){
-                Mail::to($userToReceiveEmail->email)
-                    ->send(new DefaultMail(
-                        $userToReceiveEmail->name,
-                         $message,
-                        $subjetc 
-                    ));
-            }
 
             $taxSetting = Helpers::getTaxSettings();
 
@@ -248,7 +233,23 @@ class ClientService
                     $paymentUrl,
                     $subjetc 
                 ));
-            
+
+            $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
+            $subjetc = "Novo cliente aceito";
+            $message = "Cliente {$client->name} foi aceito pelo parceiro {$auth->name}.";
+
+            foreach($usersToReceiveEmail as $userToReceiveEmail){
+                Mail::to($userToReceiveEmail->email)
+                    ->send(new DefaultMail(
+                        $userToReceiveEmail->name,
+                         $message,
+                        $subjetc 
+                    ));
+            }            
+
+            $client->status = ClientStatusEnum::WaitingPayment->value;
+            $client->save();
+
             return ['status' => true, 'data' => $client];
         }catch(Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
@@ -293,7 +294,7 @@ class ClientService
             
             $policyDocument = PolicyDocument::create($requestData);
 
-            $client->status = ClientStatusEnum::WaitingAnalisy->value;
+            $client->status = ClientStatusEnum::WaitingAnalysis->value;
             $client->save();
 
             $auth = Auth::user();
@@ -447,15 +448,17 @@ class ClientService
             $taxSetting->tax
         );
 
-        $payment = $this->makePayment();
+        $externalReference = (string) Str::uuid();
+        $payment = $this->makePayment(externalReference: $externalReference);
 
         if(!isset($payment['init_point'])){
             Log::error('Erro no pagamento', $payment);
             throw new Exception('Falha ao gerar pagamento');
         }
 
-        ClientPayment::create([
-            'external_id' => $payment['id'],
+        ClientPayment::create(attributes: [
+            'preference_id' => $payment['id'],
+            'external_id' => $externalReference,
             'client_id' => $client->id,
             'status' => PaymentStatus::Pending->value,
             'url' => $payment['init_point'],

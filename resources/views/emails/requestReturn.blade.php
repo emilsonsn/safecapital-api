@@ -53,7 +53,7 @@
             text-align: center;
         }
 
-        .frontUrl{
+        a.frontUrl{
             padding: 10px;
             background: #0044cc;
             color: white;

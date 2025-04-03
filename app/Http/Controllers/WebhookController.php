@@ -38,7 +38,8 @@ class WebhookController extends Controller
                 return response()->json(['error' => 'Pagamento não encontrado'], 404);
             }
 
-            $clientPayment = ClientPayment::where('external_id', $payment['id'])->first();
+            $clientPayment = ClientPayment::where('external_id', $payment['external_reference'])
+                ->first();
 
             if (!$clientPayment) {
                 Log::info("Pagamento não registrado no sistema ($paymentId)");

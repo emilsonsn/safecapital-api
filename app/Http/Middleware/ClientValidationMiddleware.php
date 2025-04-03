@@ -23,7 +23,7 @@ class ClientValidationMiddleware
 
         if($user->role === UserRoleEnum::Client->value &&
          $user->validation !== UserValidationEnum::Accepted->value){
-            abort(403, 'Você não tem permissão para acessar esta área.');
+            abort(403, 'Seu cadastro ainda não foi aceito.');
         }
 
         return $next($request);

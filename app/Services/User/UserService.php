@@ -213,6 +213,9 @@ class UserService
                 '1',
                 'true'
             ]) == '1' ? true : false;
+            $request['password'] = in_array($request['password'],['undefined', 'null']) ?
+                null :
+                $request['password'];
 
             $rules = [
                 'name' => ['required', 'string', 'max:255'],
@@ -222,7 +225,6 @@ class UserService
                 'cnpj' => ['required', 'string', 'max:255'],
                 'creci' => ['required', 'string', 'max:255'],
                 'email' => ['required', 'string', 'max:255'],
-                'password' => ['nullable', 'string', 'max:255'],
                 'is_active' => ['required', 'boolean'],
                 'role' => ['required', 'in:Admin,Manager,Client'],
                 'attachments' => ['nullable', 'array'],
@@ -283,7 +285,6 @@ class UserService
     public function validate($request, $id)
     {
         try {
-
             $rules = [
                 'validation' => ['required', 'string', 'in:Pending,Accepted,Return,Refused'],
                 'justification' => ['nullable', 'string', 'max:1000'],
@@ -299,32 +300,36 @@ class UserService
 
             if(!isset($userToUpdate)) throw new Exception('Usuário não encontrado');
 
-            $requestData = $validator->validated();                   
+            $userToUpdate->validation = $validator->validate()['validation'];
+            $userToUpdate->save();
 
-            $userToUpdate->update($requestData);
-
-            if($request->validation == UserValidationEnum::Accepted->value){
-                // $password = Str::random(20);
-                // $userToUpdate->password = Hash::make($password);
-                $userToUpdate->is_active = true;
-                $userToUpdate->save();
-                Mail::to($userToUpdate->email)
-                    ->send(new ValidationAcceptedMail(
-                        $userToUpdate->name,
-                        $userToUpdate->email,
-                        // $password
-                    )
-                );
-            }
-
-            if($request->validation == UserValidationEnum::Return->value){
-                Mail::to($userToUpdate->email)
-                ->send(new ValidationReturnMail($userToUpdate->name, $request->justification));
-            }
-
-            if($request->validation == UserValidationEnum::Refused->value){                
-                Mail::to($userToUpdate->email)
-                ->send(new ValidationRefusedMail($userToUpdate->name, $request->justification));
+            switch($request->validation){
+                case UserValidationEnum::Accepted->value:
+                    $userToUpdate->is_active = true;
+                    $userToUpdate->save();
+                    Mail::to($userToUpdate->email)
+                        ->send(new ValidationAcceptedMail(
+                            $userToUpdate->name,
+                            $userToUpdate->email,
+                        )
+                    );
+                    break;
+                case UserValidationEnum::Return->value: 
+                    Mail::to($userToUpdate->email)
+                        ->send(new ValidationReturnMail(
+                            $userToUpdate->name,
+                            $request->justification
+                        ));
+                    break;
+                case UserValidationEnum::Return->value:
+                    Mail::to($userToUpdate->email)
+                        ->send(new ValidationRefusedMail(
+                            $userToUpdate->name,
+                            $request->justification
+                        ));
+                    break;
+                default:
+                    throw new Exception('Validação inválida');
             }
 
             return ['status' => true, 'data' => $userToUpdate];

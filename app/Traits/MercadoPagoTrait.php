@@ -5,7 +5,6 @@ namespace App\Traits;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 trait MercadoPagoTrait
 {
@@ -20,25 +19,31 @@ trait MercadoPagoTrait
         $this->value = (float) $value;
     }
 
-    public function makePayment()
+    public function makePayment(string $externalReference)
     {
         $client = new Client();
-        $url = "https://api.mercadopago.com/v1/payments";
+        $url = "https://api.mercadopago.com/checkout/preferences";
     
         try {
             $response = $client->post($url, [
                 'headers' => [
                     'Authorization' => "Bearer {$this->mpToken}",
                     'Content-Type' => 'application/json',
-                    'X-Idempotency-Key' => (string) Str::uuid(),
                 ],
                 'json' => [
-                    'transaction_amount' => $this->value,
-                    'description' => 'Taxa do seguro',
-                    'payment_method_id' => 'pix',
+                    'items' => [
+                        [
+                            'title' => 'Taxa do seguro',
+                            'description' => 'Taxa do seguro',
+                            'quantity' => 1,
+                            'currency_id' => 'BRL',
+                            'unit_price' => $this->value
+                        ]
+                    ],
                     'payer' => [
                         'email' => $this->clientEmail,
                     ],
+                    'external_reference' => (string) $externalReference
                 ],
             ]);
     
@@ -49,15 +54,14 @@ trait MercadoPagoTrait
         } catch (RequestException $e) {
             $errorResponse = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true) : [];
     
-            Log::error('Erro ao criar pagamento: ' . $e->getMessage());
+            Log::error('Erro ao criar preference de pagamento: ' . $e->getMessage());
             Log::error('Detalhes do erro: ' . json_encode($errorResponse, JSON_PRETTY_PRINT));
     
             return [
-                'error' => 'Erro ao criar pagamento',
+                'error' => 'Erro ao criar preference de pagamento',
                 'details' => $e->getMessage(),
                 'response' => $errorResponse
             ];
         }
-    }
-        
+    }    
 }

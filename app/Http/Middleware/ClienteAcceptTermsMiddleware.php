@@ -21,7 +21,7 @@ class ClienteAcceptTermsMiddleware
         $user = User::find(Auth::user()->id);
 
         if($user->role === UserRoleEnum::Client->value && !isset($user->terms)){
-            abort(403, 'Você não tem permissão para acessar esta área.');
+            abort(403, 'Aceite os termos para ter acesso a essa àrea.');
         }
 
         return $next($request);    }

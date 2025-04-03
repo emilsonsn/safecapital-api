@@ -13,6 +13,7 @@ class ClientPayment extends Model
     public $table = 'client_payments';
 
     protected $fillable = [
+        'preference_id',
         'external_id',
         'client_id',
         'status',
