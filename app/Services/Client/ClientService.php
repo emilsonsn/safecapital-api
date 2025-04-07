@@ -39,7 +39,7 @@ class ClientService
             $user_id = $request->user_id;
             $auth = Auth::user();
 
-            $clients = Client::with('attachments', 'policy')
+            $clients = Client::with('attachments', 'policys')
                 ->orderBy('id', 'desc');
 
             if(isset($search_term)){
@@ -261,7 +261,7 @@ class ClientService
         try {
             $rules = [
                 'client_id' => ['required', 'integer'],
-                'file' => ['required', 'file', 'mimes:docx,pdf'],
+                'attachments' => ['required', 'array'],                
             ];
     
             $validator = Validator::make($request->all(), $rules);
@@ -270,29 +270,29 @@ class ClientService
                 throw new Exception($validator->errors()->first(), 400);
             }
 
-            $client = Client::with('policy')->find($request->client_id);
+            $client = Client::with('policys')->find($request->client_id);
 
             if(!isset($client)){
                 throw new Exception('Cliente não encontrado', 400);
             }
             
-            if(isset($client->policy)){
+            if($client->policys()->count()){
                 throw new Exception('Esse cliente já possui contrato anexado', 400);
             }
     
             $requestData = $request->all();
-    
-            if ($request->hasFile('file')) {
-                $file = $request->file('file');
+
+            foreach($requestData['attachments'] as $attachment){                
+                $file = $attachment->file;
                 $path = $file->store('policy-documents', 'public');
                 $requestData['path'] = $path;
-                $requestData['filename'] = $file->getClientOriginalName();
-            }
-            
-            $requestData['due_date'] = Carbon::now()->addYear();
-            $requestData['contract_number'] = Carbon::now()->format('YmdHis');
-            
-            $policyDocument = PolicyDocument::create($requestData);
+                $requestData['filename'] = $file->getClientOriginalName();                
+                
+                $requestData['due_date'] = Carbon::now()->addYear();
+                $requestData['contract_number'] = Carbon::now()->format('YmdHis');
+                
+                $policyDocument = PolicyDocument::create($requestData);
+            }            
 
             $client->status = ClientStatusEnum::WaitingAnalysis->value;
             $client->save();
