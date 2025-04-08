@@ -321,7 +321,7 @@ class UserService
                             $request->justification
                         ));
                     break;
-                case UserValidationEnum::Return->value:
+                case UserValidationEnum::Refused->value:
                     Mail::to($userToUpdate->email)
                         ->send(new ValidationRefusedMail(
                             $userToUpdate->name,

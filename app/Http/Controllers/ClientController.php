@@ -33,6 +33,13 @@ class ClientController extends Controller
         return $this->response($result);
     }
 
+    public function contractValidate(Request $request){
+        $result = $this->clientService->contractValidate($request);
+
+        if($result['status']) $result['message'] = "Documentos avaliados com sucesso";
+        return $this->response($result);
+    }
+    
     public function updatePolicyDocument(Request $request, $id){
         $result = $this->clientService->updatePolicyDocument($request, $id,);
 

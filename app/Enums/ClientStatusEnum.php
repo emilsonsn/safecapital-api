@@ -10,6 +10,7 @@ enum ClientStatusEnum: string
     case WaitingPayment = 'WaitingPayment';
     case WaitingContract = 'WaitingContract';
     case WaitingAnalysis = 'WaitingAnalysis';
+    Case WaitingPolicy = 'WaitingPolicy';
     case Active = 'Active';
     case Inactive = 'Inactive';
 }

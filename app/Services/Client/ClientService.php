@@ -5,7 +5,9 @@ namespace App\Services\Client;
 use App\Enums\ClientStatusEnum;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRoleEnum;
+use App\Enums\UserValidationEnum;
 use App\Helpers\Helpers;
+use App\Mail\AnalisyContractMail;
 use App\Mail\DefaultMail;
 use App\Mail\PaymentMail;
 use App\Models\Client;
@@ -282,7 +284,7 @@ class ClientService
     
             $requestData = $request->all();
 
-            foreach($requestData['attachments'] as $attachment){                
+            foreach($requestData['attachments'] as $attachment){
                 $file = $attachment['file'];
                 $path = $file->store('policy-documents', 'public');
                 $requestData['path'] = $path;
@@ -317,6 +319,69 @@ class ClientService
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
+
+    public function contractValidate($request, $client_id)
+    {
+        try {
+            $rules = [
+                'validation' => ['required', 'string', 'in:Accepted,Return,Refused'],
+                'justification' => ['nullable', 'string', 'max:1000'],
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                throw new Exception($validator->errors(), 400);
+            }
+
+            $clientToUpdate = Client::find($id);
+
+            if(!isset($clientToUpdate)) throw new Exception('Cliente não encontrado');
+
+            switch($request->validation){
+                case UserValidationEnum::Accepted->value:
+                    $clientToUpdate->status = ClientStatusEnum::WaitingPolicy->value;
+                    $clientToUpdate->save();
+                    Mail::to($clientToUpdate->email)
+                        ->send(new AnalisyContractMail(
+                            name: $clientToUpdate->name,
+                            subject: "Documentação aceita!",
+                            message: "Sua documentação foi revisada e já foi aprovada. Você pode seguir com o processo!",
+                            justification: ""
+                        )
+                    );
+                    break;
+                case UserValidationEnum::Return->value: 
+                    $clientToUpdate->status = ClientStatusEnum::WaitingContract->value;
+                    $clientToUpdate->save();
+                    Mail::to($clientToUpdate->email)
+                        ->send(new AnalisyContractMail(
+                            name: $clientToUpdate->name,
+                            subject: "Documentação não aceita!",
+                            message: "Sua documentação precisa de ajustes!",
+                            justification: ""
+                        ));
+                    break;
+                case UserValidationEnum::Refused->value:
+                    $clientToUpdate->status = ClientStatusEnum::Inactive->value;
+                    $clientToUpdate->save();
+                    Mail::to($clientToUpdate->email)
+                        ->send(new AnalisyContractMail(
+                            name: $clientToUpdate->name,
+                            subject: "Documentação reprovada!",
+                            message: "Sua documentação foi reprovada!",
+                            justification: ""
+                        ));
+                    break;
+                default:
+                    throw new Exception('Validação inválida');
+            }
+
+            return ['status' => true, 'data' => $clientToUpdate];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    } 
 
     public function updatePolicyDocument(Request $request, $id)
     {

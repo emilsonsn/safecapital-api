@@ -87,6 +87,7 @@ Route::middleware(['jwt'])->group(function(){
             Route::post('policy-document', [ClientController::class, 'createPolicyDocument']);
             Route::patch('policy/{id}', [ClientController::class, 'updatePolicyDocument']);
             Route::patch('accept/{id}', [ClientController::class, 'accept']);
+            Route::post('{id}/contract/analisys', [ClientController::class, 'contractValidate']);
             Route::patch('{id}', [ClientController::class, 'update']);
             Route::delete('policy/{id}', [ClientController::class, 'deletePolicyDocument']);
             Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
