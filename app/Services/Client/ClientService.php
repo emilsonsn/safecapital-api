@@ -14,6 +14,7 @@ use App\Models\Client;
 use App\Models\ClientAttachment;
 use App\Models\ClientPayment;
 use App\Models\ClientPh3Analisy;
+use App\Models\Corresponding;
 use App\Models\PolicyDocument;
 use App\Traits\MercadoPagoTrait;
 use App\Traits\PH3Trait;
@@ -41,7 +42,7 @@ class ClientService
             $user_id = $request->user_id;
             $auth = Auth::user();
 
-            $clients = Client::with('attachments', 'policys')
+            $clients = Client::with('attachments', 'policys', 'corresponding')
                 ->orderBy('id', 'desc');
 
             if(isset($search_term)){
@@ -97,6 +98,7 @@ class ClientService
                 'state' => ['required', 'string', 'max:255'],
                 'attachments' => ['nullable', 'array'],
             ];
+
             $userId = Auth::user()->id;
 
             $requestData = $request->all();
@@ -123,6 +125,24 @@ class ClientService
                         'client_id' => $client->id,
                     ]);
                 }
+            }
+
+            if($request->corresponding){
+                $dataCorresponding = $request->corresponding;
+                $corresponding = Corresponding::updateOrCreate([
+                    'id' => $dataCorresponding['cpf'] ?? '',
+                ],[
+                    'client_id' => $client->id,
+                    'cpf' => $dataCorresponding['cpf'],
+                    'fullname' => $dataCorresponding['fullname'],
+                    'birthday' => $dataCorresponding['birthday'],
+                    'declared_income' => $dataCorresponding['declared_income'],
+                    'occupation' => $dataCorresponding['occupation'],
+                    'email' => $dataCorresponding['email'],
+                    'phone' => $dataCorresponding['phone'],
+                ]);
+
+                $clientToUpdate['corresponding'] = $corresponding;
             }
 
             $ph3Result = $this->searchClienteInPH3($client);
@@ -189,6 +209,24 @@ class ClientService
                         'client_id' => $clientToUpdate->id,
                     ]);
                 }
+            }
+
+            if($request->corresponding){
+                $dataCorresponding = $request->corresponding;
+                $corresponding = Corresponding::updateOrCreate([
+                    'id' => $dataCorresponding['cpf'] ?? '',
+                ],[
+                    'client_id' => $client->id,
+                    'cpf' => $dataCorresponding['cpf'],
+                    'fullname' => $dataCorresponding['fullname'],
+                    'birthday' => $dataCorresponding['birthday'],
+                    'declared_income' => $dataCorresponding['declared_income'],
+                    'occupation' => $dataCorresponding['occupation'],
+                    'email' => $dataCorresponding['email'],
+                    'phone' => $dataCorresponding['phone'],
+                ]);
+
+                $clientToUpdate['corresponding'] = $corresponding;
             }
 
             return ['status' => true, 'data' => $clientToUpdate];
@@ -481,7 +519,7 @@ class ClientService
                    ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
                    ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
         });
-    
+            
         if ($approvedConfig) {
             $client->status = ClientStatusEnum::Approved;
             $client->save();

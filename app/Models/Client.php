@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
@@ -12,7 +15,6 @@ class Client extends Model
 
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
     public $table = 'clients';
 
     protected $fillable = [
@@ -39,19 +41,23 @@ class Client extends Model
         'user_id',
     ];
 
-    public function user(){
-        return $this->belongsTo(User::class);
+    public function user(): BelongsTo{
+        return $this->belongsTo(related: User::class);
     }
 
-    public function attachments(){
+    public function attachments(): HasMany{
         return $this->hasMany(ClientAttachment::class);
     }
 
-    public function policys(){
+    public function policys(): HasMany{
         return $this->hasMany(PolicyDocument::class);
     }
 
-    public function analisys(){
+    public function analisys(): HasOne{
         return $this->hasOne(ClientPh3Analisy::class);
+    }
+
+    public function corresponding(): HasOne{
+        return $this->hasOne(related: Corresponding::class);
     }
 }
