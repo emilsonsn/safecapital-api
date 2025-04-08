@@ -12,7 +12,7 @@ class AnalisyContractMail extends Mailable
 
     public $name;
     public $justification;
-    public $message;
+    public $textMessage;
     public $subject;
 
     /**
@@ -22,7 +22,7 @@ class AnalisyContractMail extends Mailable
     {
         $this->name = $name;
         $this->justification = $justification;
-        $this->message = $message;
+        $this->textMessage = $message;
         $this->subject = $subject;
     }
 
@@ -36,7 +36,7 @@ class AnalisyContractMail extends Mailable
                     ->with(key: [
                         'name' => $this->name,
                         'justification' => $this->justification,
-                        'message' => $this->message,
+                        'message' => $this->textMessage,
                     ])
                     ->subject(subject: $this->subject);
     }
