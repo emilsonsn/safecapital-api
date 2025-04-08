@@ -283,7 +283,7 @@ class ClientService
             $requestData = $request->all();
 
             foreach($requestData['attachments'] as $attachment){                
-                $file = $attachment->file;
+                $file = $attachment['file'];
                 $path = $file->store('policy-documents', 'public');
                 $requestData['path'] = $path;
                 $requestData['filename'] = $file->getClientOriginalName();                
