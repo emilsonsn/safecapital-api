@@ -216,7 +216,7 @@ class ClientService
                 $corresponding = Corresponding::updateOrCreate([
                     'id' => $dataCorresponding['cpf'] ?? '',
                 ],[
-                    'client_id' => $client->id,
+                    'client_id' => $clientToUpdate->id,
                     'cpf' => $dataCorresponding['cpf'],
                     'fullname' => $dataCorresponding['fullname'],
                     'birthday' => $dataCorresponding['birthday'],
