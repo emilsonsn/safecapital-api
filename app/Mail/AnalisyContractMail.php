@@ -18,11 +18,11 @@ class AnalisyContractMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct($name, $subject, $message, $justification = null)
+    public function __construct($name, $subject, $textMessage, $justification = null)
     {
         $this->name = $name;
         $this->justification = $justification;
-        $this->textMessage = $message;
+        $this->textMessage = $textMessage;
         $this->subject = $subject;
     }
 

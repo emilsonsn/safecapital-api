@@ -346,7 +346,7 @@ class ClientService
                         ->send(new AnalisyContractMail(
                             name: $clientToUpdate->name,
                             subject: "Documentação aceita!",
-                            message: "Sua documentação foi revisada e já foi aprovada. Você pode seguir com o processo!",
+                            textMessage: "Sua documentação foi revisada e já foi aprovada. Você pode seguir com o processo!",
                             justification: ""
                         )
                     );
@@ -359,7 +359,7 @@ class ClientService
                         ->send(new AnalisyContractMail(
                             name: $clientToUpdate->name,
                             subject: "Documentação não aceita!",
-                            message: "Sua documentação precisa de ajustes!",
+                            textMessage: "Sua documentação precisa de ajustes!",
                             justification: ""
                         ));
                     break;
@@ -370,7 +370,7 @@ class ClientService
                         ->send(new AnalisyContractMail(
                             name: $clientToUpdate->name,
                             subject: "Documentação reprovada!",
-                            message: "Sua documentação foi reprovada!",
+                            textMessage: "Sua documentação foi reprovada!",
                             justification: ""
                         ));
                     break;
