@@ -334,7 +334,7 @@ class ClientService
                 throw new Exception($validator->errors(), 400);
             }
 
-            $clientToUpdate = Client::find($id);
+            $clientToUpdate = Client::find($client_id);
 
             if(!isset($clientToUpdate)) throw new Exception('Cliente não encontrado');
 
