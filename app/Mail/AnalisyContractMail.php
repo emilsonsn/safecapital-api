@@ -36,7 +36,7 @@ class AnalisyContractMail extends Mailable
                     ->with(key: [
                         'name' => $this->name,
                         'justification' => $this->justification,
-                        'message' => $this->textMessage,
+                        'textMessage' => $this->textMessage,
                     ])
                     ->subject(subject: $this->subject);
     }
