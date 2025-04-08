@@ -82,7 +82,7 @@ class SolicitationService
         try {
             $rules = [
                 'contract_number' => ['required', 'string', 'max:255'],
-                'subject' => ['required', 'string', 'max:255'],
+                'subject' => ['nullable', 'string', 'max:255'],
                 'status' => ['required', 'string', 'in:Received,UnderAnalysis,Awaiting,PaymentProvisioned,Completed'],
                 'category' => ['required', 'string'],
                 'attachments' => ['nullable', 'array'],
@@ -224,7 +224,7 @@ class SolicitationService
         try {
             $rules = [
                 'contract_number' => ['required', 'string', 'max:255'],
-                'subject' => ['required', 'string', 'max:255'],
+                'subject' => ['nullable', 'string', 'max:255'],
                 'status' => ['required', 'string', 'in:Received,UnderAnalysis,Awaiting,PaymentProvisioned,Completed'],
                 'category' => ['required', 'string'],
             ];
