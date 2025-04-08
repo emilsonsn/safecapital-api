@@ -66,7 +66,8 @@ Route::middleware(['jwt'])->group(function(){
             Route::post('create', [SolicitationController::class, 'create']);
             Route::patch('{id}', [SolicitationController::class, 'update']);
             Route::post('create-message', [SolicitationController::class, 'createMessage']);
-            Route::delete('{id}', [SolicitationController::class, 'delete']);        
+            Route::delete('{id}', [SolicitationController::class, 'delete']);   
+            Route::delete('item/{id}', [SolicitationController::class, 'deleteItem']);                    
         });
     
         Route::prefix('credit-configuration')->group(function(){

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Solicitation extends Model
@@ -23,15 +25,19 @@ class Solicitation extends Model
         'user_id',
     ];
 
-    public function user(){
-        return $this->belongsTo(User::class);
+    public function user(): BelongsTo{
+        return $this->belongsTo(related: User::class);
     }
 
-    public function messages(){
-        return $this->hasMany(SolicitationMessage::class)->with('user');
+    public function messages(): HasMany{
+        return $this->hasMany(related: SolicitationMessage::class)->with('user');
     }
 
-    public function attachments(){
-        return $this->hasMany(SolicitationAttachment::class);
+    public function attachments(): HasMany{
+        return $this->hasMany(related: SolicitationAttachment::class);
+    }
+
+    public function items(): HasMany{
+        return $this->hasMany(related: SolicitationItem::class);
     }
 }

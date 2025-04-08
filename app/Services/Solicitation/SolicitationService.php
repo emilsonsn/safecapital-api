@@ -7,6 +7,7 @@ use App\Helpers\Helpers;
 use App\Mail\DefaultMail;
 use App\Models\Solicitation;
 use App\Models\SolicitationAttachment;
+use App\Models\SolicitationItem;
 use App\Models\SolicitationMessage;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -25,8 +26,12 @@ class SolicitationService
             $category = $request->category;            
             $user_id = $request->user_id;
 
-            $solicitations = Solicitation::with('messages', 'user', 'attachments')
-                ->orderBy('id', 'desc');
+            $solicitations = Solicitation::with(relations: [
+                'messages',
+                'user',
+                'attachments',
+                'items'
+            ])->orderBy('id', 'desc');
 
             if(isset($search_term)){
                 $solicitations->where(function($query) use($search_term){
@@ -110,6 +115,19 @@ class SolicitationService
                 }
             }
 
+            if($request->filled('items') && count($request->items)){
+                foreach($request->items as $item){
+                    SolicitationItem::updateOrcreate([
+                        'id' => $item['id'] ?? ''
+                    ],[
+                        'solicitation_id' => $solicitation->id,
+                        'description' => $item['description'],
+                        'value' => $item['value'],
+                        'due_date' => $item['due_date'],
+                    ]);
+                }
+            }
+
             $adminAndManagers = Helpers::getAdminAndManagerUsers();
 
             if(count($adminAndManagers)){
@@ -163,6 +181,19 @@ class SolicitationService
 
             $solicitation = SolicitationMessage::create($requestData);
 
+            if($request->filled('items') && count($request->items)){
+                foreach($request->items as $item){
+                    SolicitationItem::updateOrcreate([
+                        'id' => $item['id'] ?? ''
+                    ],[
+                        'solicitation_id' => $solicitation->id,
+                        'description' => $item['description'],
+                        'value' => $item['value'],
+                        'due_date' => $item['due_date'],
+                    ]);
+                }
+            } 
+
             if($user->role === 'Client'){
                 $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
             }else{
@@ -208,6 +239,19 @@ class SolicitationService
 
             $solicitationToUpdate = Solicitation::find($user_id);
 
+            if($request->filled('items') && count($request->items)){
+                foreach($request->items as $item){
+                    SolicitationItem::updateOrcreate([
+                        'id' => $item['id'] ?? ''
+                    ],[
+                        'solicitation_id' => $solicitationToUpdate->id,
+                        'description' => $item['description'],
+                        'value' => $item['value'],
+                        'due_date' => $item['due_date'],
+                    ]);
+                }
+            }
+
             if(!isset($solicitationToUpdate)) throw new Exception('Solicitação não encontrada');
 
             $solicitationToUpdate->update($validator->validated());
@@ -232,4 +276,26 @@ class SolicitationService
             return [ 'status' => false, 'error' => $error->getMessage(), 'statusCode' => 400 ];
         }
     }
+
+    public function deleteItem($id){
+        try{
+            $item = SolicitationItem::find($id);
+
+            if(!$item) throw new Exception('Item não encontrado');
+
+            $itemDescription = $item->description;
+            $item->delete();
+
+            return [
+                'status' => true,
+                'data' => $itemDescription
+            ];
+        }catch(Exception $error) {
+            return [
+                'status' => false,
+                'error' => $error->getMessage(),
+                'statusCode' => 400
+            ];
+        }
+    }    
 }
