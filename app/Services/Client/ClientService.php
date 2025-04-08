@@ -347,7 +347,7 @@ class ClientService
                             name: $clientToUpdate->name,
                             subject: "Documentação aceita!",
                             textMessage: "Sua documentação foi revisada e já foi aprovada. Você pode seguir com o processo!",
-                            justification: ""
+                            justification: $request->justification ?? ''
                         )
                     );
                     break;
@@ -360,7 +360,7 @@ class ClientService
                             name: $clientToUpdate->name,
                             subject: "Documentação não aceita!",
                             textMessage: "Sua documentação precisa de ajustes!",
-                            justification: ""
+                            justification: $request->justification ?? ''
                         ));
                     break;
                 case UserValidationEnum::Refused->value:
@@ -371,7 +371,7 @@ class ClientService
                             name: $clientToUpdate->name,
                             subject: "Documentação reprovada!",
                             textMessage: "Sua documentação foi reprovada!",
-                            justification: ""
+                            justification: $request->justification ?? ''
                         ));
                     break;
                 default:
