@@ -353,6 +353,7 @@ class ClientService
                     break;
                 case UserValidationEnum::Return->value: 
                     $clientToUpdate->status = ClientStatusEnum::WaitingContract->value;
+                    $clientToUpdate->policys()->delete();
                     $clientToUpdate->save();
                     Mail::to($clientToUpdate->email)
                         ->send(new AnalisyContractMail(
