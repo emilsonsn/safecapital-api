@@ -18,6 +18,10 @@ return new class extends Migration
                 ])
                 ->default('Residential')
                 ->after('number');
+
+            $table->string('doc4sign_document_uuid')
+                ->after('property_type')
+                ->nullable();
         });
     }
 
@@ -28,6 +32,7 @@ return new class extends Migration
     {
         Schema::table('clients', function (Blueprint $table) {
             $table->dropColumn('property_type');
+            $table->dropColumn('doc4sign_document_uuid');
         });
     }
 };

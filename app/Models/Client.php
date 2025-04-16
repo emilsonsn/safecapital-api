@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PropertyTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,31 @@ class Client extends Model
     const UPDATED_AT = 'updated_at';
     public $table = 'clients';
 
+    // criar metodo cast
+    protected $casts = [
+        'id' => 'integer',
+        'name' => 'string',
+        'surname' => 'string',
+        'birthday' => 'date',
+        'email' => 'string',
+        'phone' => 'string',
+        'cpf' => 'string',
+        'cep' => 'string',
+        'street' => 'string',
+        'number' => 'string',
+        'property_type' => PropertyTypeEnum::class,
+        'rental_value' => 'float',
+        'property_tax' => 'float',
+        'condominium_fee' => 'float',
+        'policy_value' => 'float',
+        'neighborhood' => 'string',
+        'observations' => 'string',
+        'payment_form' => 'string',
+        'complement' => 'string',
+        'city' => 'string',
+        'state' => 'string',        
+    ];
+
     protected $fillable = [
         'name',
         'surname',
@@ -28,6 +54,7 @@ class Client extends Model
         'street',
         'number',
         'property_type',
+        'doc4sign_document_uuid',
         'rental_value',
         'property_tax',
         'condominium_fee',

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\ClientPayment;
@@ -66,6 +68,69 @@ class WebhookController extends Controller
         }
     }
 
+    /**
+     * Recebe o webhook da D4Sign.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function d4sign(Request $request): JsonResponse
+    {
+        try {
+            Log::info('Webhook D4Sign recebido:', $request->all());
+
+            $uuid = $request->input('uuid');
+            $typePost = $request->input('type_post');
+
+            if (!$uuid || !$typePost) {
+                return response()->json(['error' => 'Dados incompletos'], 400);
+            }
+
+            $client = Client::where('doc4sign_document_uuid', $uuid)->first();
+
+            if (!$client) {
+                Log::warning("Cliente não encontrado para UUID do documento: $uuid");
+                return response()->json(['error' => 'Cliente não encontrado'], 404);
+            }
+
+            switch ($typePost) {
+                case 1:
+                case 4:
+                    $client->status = ClientStatusEnum::Active->value;
+                    break;        
+                case 3:
+                    $client->status = ClientStatusEnum::Inactive->value;
+                    break;            
+                default:
+                    return response()
+                        ->json(
+                            data: ['message' => 'Evento ignorado'],
+                            status: 200
+                        );
+            }
+            
+            $client->save();
+
+            return response()
+                ->json(
+                    data: ['success' => true],
+                    status: 200
+                );
+        } catch (Exception $e) {
+            Log::error('Erro no webhook da D4Sign: ' . $e->getMessage());
+            return response()->json(
+                data: ['error' => 'Erro interno'],
+                status: 500
+            );
+        }
+    }
+
+    /**
+     * Consulta o status de um pagamento no Mercado Pago.
+     *
+     * @param string $paymentId
+     * @return array|null
+     */
     private function getPaymentStatus($paymentId)
     {
         $accessToken = env('MERCADO_PAGO_ACCESS_TOKEN');

@@ -16,13 +16,14 @@ use App\Models\ClientPayment;
 use App\Models\ClientPh3Analisy;
 use App\Models\Corresponding;
 use App\Models\PolicyDocument;
+use App\Traits\Doc4SignTrait;
 use App\Traits\MercadoPagoTrait;
 use App\Traits\PH3Trait;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpWord\TemplateProcessor;
 use Illuminate\Support\Facades\Validator;
 use Log;
 use Mail;
@@ -31,7 +32,7 @@ use Illuminate\Support\Str;
 class ClientService
 {
 
-    use PH3Trait, MercadoPagoTrait;
+    use PH3Trait, MercadoPagoTrait, Doc4SignTrait;
     
     public function search($request)
     {
@@ -85,7 +86,8 @@ class ClientService
                 'cpf' => ['required', 'string', 'max:255'],
                 'cep' => ['required', 'string', 'max:255'],
                 'street' => ['required', 'string', 'max:255'],
-                'number'=> ['required', 'string', 'max:255'],
+                'number' => ['required', 'string', 'max:255'],
+                'property_type' => ['required', 'string', 'max:255'],
                 'rental_value' => ['required', 'numeric'],
                 'property_tax' => ['required', 'numeric'],
                 'condominium_fee' => ['required', 'numeric'],
@@ -166,7 +168,8 @@ class ClientService
                 'cpf' => ['required', 'string', 'max:255'],
                 'cep' => ['required', 'string', 'max:255'],
                 'street' => ['required', 'string', 'max:255'],
-                'number'=> ['required', 'string', 'max:255'],
+                'number' => ['required', 'string', 'max:255'],
+                'property_type' => ['required', 'string', 'max:255'],
                 'rental_value' => ['required', 'numeric'],
                 'status' => ['required', 'string'],
                 'property_tax' => ['required', 'numeric'],
@@ -211,7 +214,7 @@ class ClientService
                 }
             }
 
-            if($request->corresponding){
+            if($request->corresponding && isset($request->corresponding['cpf'])){
                 $dataCorresponding = $request->corresponding;
                 $corresponding = Corresponding::updateOrCreate([
                     'id' => $dataCorresponding['cpf'] ?? '',
@@ -380,6 +383,7 @@ class ClientService
                 case UserValidationEnum::Accepted->value:
                     $clientToUpdate->status = ClientStatusEnum::WaitingPolicy->value;
                     $clientToUpdate->save();
+                    $this->makePolicy(client: $clientToUpdate);
                     Mail::to($clientToUpdate->email)
                         ->send(new AnalisyContractMail(
                             name: $clientToUpdate->name,
@@ -571,5 +575,71 @@ class ClientService
         ]);
 
         return $payment;
+    }
+    
+    private function makePolicy(Client $client)
+    {
+        $this->prepareDoc4Sign();
+    
+        $templatePath = storage_path('app/templates/policy_template.docx');
+        $fileName = 'policy_' . Str::uuid() . '.docx';
+        $filledPath = storage_path('app/policies/' . $fileName);
+    
+        $template = new TemplateProcessor($templatePath);
+
+        $template->setValue('contract_number', $client->policys[0]->contract_number);
+        $template->setValue('date', now()->format('d/m/Y'));
+        $template->setValue('policy_value', 'R$ ' . number_format($client->policy_value, 2, ',', '.'));
+        $template->setValue('month_value', 'R$ ' . number_format(($client->policy_value / 12), 2, ',', '.'));
+        
+        $template->setValue('address', $client->street);
+        $template->setValue('number', $client->number);
+        $template->setValue('complement', $client->complement ?? '');
+        $template->setValue('cep', $client->cep);
+        $template->setValue('property_type', $client->property_type->label());
+        $template->setValue('neighborhood', $client->neighborhood);
+        $template->setValue('city', $client->city);
+        $template->setValue('state', $client->state);
+        
+        $template->setValue('name', $client->name . ' ' . $client->surname);
+        $template->setValue('cpf', $client->cpf);
+        $template->setValue('email', $client->email);
+        $template->setValue('birthday', Carbon::parse($client->birthday)->format('d/m/Y'));
+        $template->setValue('phone', $client->phone);
+        
+        $template->setValue('corresponding_name', $client->corresponding?->name ?? '');
+        $template->setValue('corresponding_cpf', $client->corresponding->cpf ?? '');
+        $template->setValue('corresponding_email', $client->corresponding?->email ?? '');
+        $template->setValue('corresponding_birthday', $client->corresponding?->birthday?->format('d/m/Y') ?? '');
+        $template->setValue('corresponding_phone', $client->corresponding?->phone ?? '');
+        
+        $template->saveAs($filledPath);
+
+        $this->prepareDoc4Sign();
+    
+        $upload = $this->uploadDocument( $filledPath, $fileName);
+        $documentUuid = $upload['uuid'];
+
+        $client->doc4sign_document_uuid = $documentUuid;
+        $client->save();
+    
+        $this->createSigner($documentUuid, [            
+                [
+                    'email' => $client->email,
+                    'act' => '1',
+                    'foreign' => '0',
+                    'certificadoicpbr' => '0',
+                    'assinatura_presencial' => '0',
+                    'docauth' => '0',
+                    'docauthandselfie' => '0',
+                    'embed_methodauth' => 'email',
+                    'upload_allow' => '0',
+                    'certificadoicpbr_cpf' => $client->cpf,
+                ]            
+        ]);
+    
+        $this->sendToSign($documentUuid);
+    
+        $this->registerWebhook($documentUuid, route('webhook.d4sign'));    
     }
 }
