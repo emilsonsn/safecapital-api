@@ -27,6 +27,7 @@ class Client extends Model
         'cep',
         'street',
         'number',
+        'property_type',
         'rental_value',
         'property_tax',
         'condominium_fee',
