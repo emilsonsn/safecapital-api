@@ -138,8 +138,6 @@ class ClientService
                     'cpf' => $dataCorresponding['cpf'],
                     'fullname' => $dataCorresponding['fullname'],
                     'birthday' => $dataCorresponding['birthday'],
-                    'declared_income' => $dataCorresponding['declared_income'],
-                    'occupation' => $dataCorresponding['occupation'],
                     'email' => $dataCorresponding['email'],
                     'phone' => $dataCorresponding['phone'],
                 ]);
@@ -223,8 +221,6 @@ class ClientService
                     'cpf' => $dataCorresponding['cpf'],
                     'fullname' => $dataCorresponding['fullname'],
                     'birthday' => $dataCorresponding['birthday'],
-                    'declared_income' => $dataCorresponding['declared_income'],
-                    'occupation' => $dataCorresponding['occupation'],
                     'email' => $dataCorresponding['email'],
                     'phone' => $dataCorresponding['phone'],
                 ]);

@@ -98,7 +98,7 @@ Route::middleware(['jwt'])->group(function(){
 });
 
 Route::prefix('webhook')->group(function () {
-    Route::post('payment', [WebhookController::class, 'handleWebhook']);
+    Route::post('payment', [WebhookController::class, 'mercadopago']);
     Route::post('d4sign', [WebhookController::class, 'd4sign'])
         ->name('webhook.d4sign');
 });
