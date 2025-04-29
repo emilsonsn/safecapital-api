@@ -70,7 +70,7 @@
         <p>
             Parabéns. Sua locação foi aprovada!
             Para seguir com a ativação do seguro você precisa
-            fazer o pagamento da taxa no valor de R$ {{ number_format($value, 2, ',', '.') }}
+            fazer o pagamento da Taxa Setup no valor de R$ {{ number_format($value, 2, ',', '.') }}
         </p>        
         <p>
             <a href="{{ $url }}">Realizar pagamento</a>             
