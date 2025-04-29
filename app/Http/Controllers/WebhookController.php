@@ -20,7 +20,7 @@ class WebhookController extends Controller
         $this->clientService = $clientService;
     }
 
-    public function handleWebhook(Request $request)
+    public function mercadopago(Request $request)
     {
         try {
             Log::info('Webhook recebido:', $request->all());
@@ -67,7 +67,7 @@ class WebhookController extends Controller
             }
 
             $this->clientService
-                ->makePolicy($clientPayment->id);
+                ->makePolicy($clientPayment);
 
             $clientPayment->client->status = ClientStatusEnum::WaitingPolicy->value;
             $clientPayment->client->save();

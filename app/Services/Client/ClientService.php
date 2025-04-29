@@ -89,7 +89,7 @@ class ClientService
                 'number' => ['required', 'string', 'max:255'],
                 'property_type' => ['required', 'string', 'max:255'],
                 'rental_value' => ['required', 'numeric'],
-                'property_tax' => ['required', 'numeric'],
+                'property_tax' => ['nullable', 'numeric'],
                 'condominium_fee' => ['required', 'numeric'],
                 'policy_value' => ['required', 'numeric'],
                 'neighborhood' => ['required', 'string', 'max:255'],
@@ -148,6 +148,11 @@ class ClientService
             $ph3Result = $this->searchClienteInPH3($client);
             $this->analizeClient($client, $ph3Result);
 
+            if($client->status != ClientStatusEnum::Approved && $client->corresponding){
+                $ph3Result = $this->searchClienteInPH3($client, true);
+                $this->analizeClient($client, $ph3Result, true);
+            }
+
             return ['status' => true, 'data' => $client];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
@@ -170,7 +175,7 @@ class ClientService
                 'property_type' => ['required', 'string', 'max:255'],
                 'rental_value' => ['required', 'numeric'],
                 'status' => ['required', 'string'],
-                'property_tax' => ['required', 'numeric'],
+                'property_tax' => ['nullable', 'numeric'],
                 'condominium_fee' => ['required', 'numeric'],
                 'policy_value' => ['required', 'numeric'],
                 'neighborhood' => ['required', 'string', 'max:255'],
@@ -480,8 +485,9 @@ class ClientService
         }
     }
 
-    private function searchClienteInPH3(Client $client){
-        $cpfOrCnpj = $client->cpf;
+    private function searchClienteInPH3(Client $client, $hasCorresponding = false){
+        $cpfOrCnpj = $hasCorresponding ? $client->corresponding->cpf : $client->cpf;
+
         $this->preparePh3();
         $response = $this->searchClientForCpfOrCnpj($cpfOrCnpj);
 
@@ -495,7 +501,7 @@ class ClientService
         return $response;
     }
 
-    private function analizeClient($client, $ph3Response)
+    private function analizeClient($client, $ph3Response, $hascorresponding = false)
     {
         $settings = Helpers::getCreditSettings();
     
@@ -539,9 +545,11 @@ class ClientService
             $client->save();
             return;
         }
-    
-        $client->status = ClientStatusEnum::Disapproved;
-        $client->save();
+
+        if(! $hascorresponding){
+            $client->status = ClientStatusEnum::Disapproved;
+            $client->save();
+        }
     }
 
     private function createPayment($client, $taxSetting){
