@@ -381,14 +381,13 @@ class ClientService
 
             switch($request->validation){
                 case UserValidationEnum::Accepted->value:
-                    $clientToUpdate->status = ClientStatusEnum::WaitingPolicy->value;
+                    $clientToUpdate->status = ClientStatusEnum::Active->value;
                     $clientToUpdate->save();
-                    $this->makePolicy(client: $clientToUpdate);
                     Mail::to($clientToUpdate->email)
                         ->send(new AnalisyContractMail(
                             name: $clientToUpdate->name,
                             subject: "Documentação aceita!",
-                            textMessage: "Sua documentação foi revisada e já foi aprovada. Você pode seguir com o processo!",
+                            textMessage: "Sua documentação foi revisada e já foi aprovada!",
                             justification: $request->justification ?? ''
                         )
                     );
@@ -577,7 +576,7 @@ class ClientService
         return $payment;
     }
     
-    private function makePolicy(Client $client)
+    public function makePolicy(Client $client)
     {
         $this->prepareDoc4Sign();
     

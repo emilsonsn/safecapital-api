@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Services\Client\ClientService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +13,13 @@ use Exception;
 
 class WebhookController extends Controller
 {
+
+    private $clientService;
+
+    public function __construct(ClientService $clientService) {
+        $this->clientService = $clientService;
+    }
+
     public function handleWebhook(Request $request)
     {
         try {
@@ -58,7 +66,10 @@ class WebhookController extends Controller
                 );
             }
 
-            $clientPayment->client->status = ClientStatusEnum::WaitingContract->value;
+            $this->clientService
+                ->makePolicy($clientPayment->id);
+
+            $clientPayment->client->status = ClientStatusEnum::WaitingPolicy->value;
             $clientPayment->client->save();
             
             return response()->json(['success' => true], 200);
@@ -96,7 +107,7 @@ class WebhookController extends Controller
             switch ($typePost) {
                 case 1:
                 case 4:
-                    $client->status = ClientStatusEnum::Active->value;
+                    $client->status = ClientStatusEnum::WaitingContract->value;
                     break;        
                 case 3:
                     $client->status = ClientStatusEnum::Inactive->value;

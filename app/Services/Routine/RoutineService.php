@@ -31,12 +31,12 @@ class RoutineService
                 }
     
                 $clientPayment->status = $payment['status'];
-                $clientPayment->save();
-    
+            
                 if ($payment['status'] === 'approved'){
-                    $clientPayment->client->status = ClientStatusEnum::WaitingContract->value;
-                    $clientPayment->client->save();
+                    $clientPayment->client->status = ClientStatusEnum::WaitingPolicy->value;
                 }
+
+                $clientPayment->client->save();
             }
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
