@@ -129,7 +129,7 @@ class ClientService
                 }
             }
 
-            if($request->corresponding){
+            if($request->corresponding && isset($request->corresponding['cpf'])){
                 $dataCorresponding = $request->corresponding;
                 $corresponding = Corresponding::updateOrCreate([
                     'id' => $dataCorresponding['cpf'] ?? '',
