@@ -292,6 +292,7 @@ class ClientService
             }            
 
             $client->status = ClientStatusEnum::WaitingPayment->value;
+            $client->contract_number = Carbon::now()->format('YmdHis');
             $client->save();
 
             return ['status' => true, 'data' => $client];
@@ -333,7 +334,7 @@ class ClientService
                 $requestData['filename'] = $file->getClientOriginalName();                
                 
                 $requestData['due_date'] = Carbon::now()->addYear();
-                $requestData['contract_number'] = Carbon::now()->format('YmdHis');
+                $requestData['contract_number'] = $client->contract_number ?? Carbon::now()->format('YmdHis');
                 
                 $policyDocument = PolicyDocument::create($requestData);
             }            

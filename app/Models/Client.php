@@ -55,6 +55,7 @@ class Client extends Model
         'number',
         'property_type',
         'doc4sign_document_uuid',
+        'contract_number',
         'rental_value',
         'property_tax',
         'condominium_fee',
