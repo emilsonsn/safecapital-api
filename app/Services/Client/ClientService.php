@@ -591,7 +591,7 @@ class ClientService
     
         $template = new TemplateProcessor($templatePath);
 
-        $template->setValue('contract_number', $client->policys[0]->contract_number);
+        $template->setValue('contract_number', $client->contract_number);
         $template->setValue('date', now()->format('d/m/Y'));
         $template->setValue('policy_value', 'R$ ' . number_format($client->policy_value, 2, ',', '.'));
         $template->setValue('month_value', 'R$ ' . number_format(($client->policy_value / 12), 2, ',', '.'));
