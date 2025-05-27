@@ -67,7 +67,7 @@ class WebhookController extends Controller
             }
 
             $this->clientService
-                ->makePolicy($clientPayment);
+                ->makePolicy($clientPayment->client);
 
             $clientPayment->client->status = ClientStatusEnum::WaitingPolicy->value;
             $clientPayment->client->save();
