@@ -29,7 +29,7 @@ class ClientController extends Controller
     public function createPolicyDocument(Request $request){
         $result = $this->clientService->createPolicyDocument($request);
 
-        if($result['status']) $result['message'] = "Apolice salva com sucesso";
+        if($result['status']) $result['message'] = "Documento salvo com sucesso";
         return $this->response($result);
     }
 
@@ -43,14 +43,14 @@ class ClientController extends Controller
     public function updatePolicyDocument(Request $request, $id){
         $result = $this->clientService->updatePolicyDocument($request, $id,);
 
-        if($result['status']) $result['message'] = "Apolice salva com sucesso";
+        if($result['status']) $result['message'] = "Documento salvo com sucesso";
         return $this->response($result);
     }
 
     public function deletePolicyDocument($id){
         $result = $this->clientService->deletePolicyDocument($id);
 
-        if($result['status']) $result['message'] = "Apolice deletada com sucesso";
+        if($result['status']) $result['message'] = "Documento deletado com sucesso";
         return $this->response($result);
     }
     
