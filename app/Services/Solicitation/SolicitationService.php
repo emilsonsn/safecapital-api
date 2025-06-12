@@ -179,25 +179,12 @@ class SolicitationService
                 $requestData['attachment'] = $path;
             }
 
-            $solicitation = SolicitationMessage::create($requestData);
-
-            if($request->filled('items') && count($request->items)){
-                foreach($request->items as $item){
-                    SolicitationItem::updateOrcreate([
-                        'id' => $item['id'] ?? ''
-                    ],[
-                        'solicitation_id' => $solicitation->id,
-                        'description' => $item['description'],
-                        'value' => $item['value'],
-                        'due_date' => $item['due_date'],
-                    ]);
-                }
-            } 
+            $solicitationMessage = SolicitationMessage::create($requestData);
 
             if($user->role === 'Client'){
                 $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
             }else{
-                $usersToReceiveEmail = [ $user ];
+                $usersToReceiveEmail = [ $solicitationMessage->solicitation->user ];
             }
 
             if(count($usersToReceiveEmail)){
@@ -213,7 +200,7 @@ class SolicitationService
                 }
             }
             
-            return ['status' => true, 'data' => $solicitation];
+            return ['status' => true, 'data' => $solicitationMessage];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }

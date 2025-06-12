@@ -68,8 +68,8 @@
     <div class="email-container">
         <h1>Olá, <strong>{{ $userName }}</strong>! Tudo bem?</h1>
         <p>
-            {{ $messageText }}
-        </p>        
+            {!! $messageText !!}
+        </p>
         <div class="footer">
             <p>© {{ date('Y') }} {{ env('APP_NAME') }}. Todos os direitos reservados.</p>
         </div>

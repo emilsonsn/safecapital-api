@@ -86,6 +86,7 @@ Route::middleware(['jwt'])->group(function(){
             Route::get('search', [ClientController::class, 'search']);
             Route::post('create', [ClientController::class, 'create']);
             Route::post('policy-document', [ClientController::class, 'createPolicyDocument']);
+            Route::post('send-message', [ClientController::class, 'sendMessage']);
             Route::patch('policy/{id}', [ClientController::class, 'updatePolicyDocument']);
             Route::patch('accept/{id}', [ClientController::class, 'accept']);
             Route::post('{id}/contract/analisys', [ClientController::class, 'contractValidate']);

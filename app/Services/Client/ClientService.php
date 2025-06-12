@@ -289,7 +289,7 @@ class ClientService
                          $message,
                         $subjetc 
                     ));
-            }            
+            }
 
             $client->status = ClientStatusEnum::WaitingPayment->value;
             $client->contract_number = Carbon::now()->format('YmdHis');
@@ -347,7 +347,7 @@ class ClientService
             $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
 
             $message = "Contrato do cliente {$client->name} anexado pelo parceiro {$auth->name}.";
-            $subjetc = "Contrato anexado";
+            $subjetc = "Contrato anexado e aguardando validação";
             foreach($usersToReceiveEmail as $userToReceiveEmail){
                 Mail::to($userToReceiveEmail->email)
                     ->send(new DefaultMail(
@@ -579,6 +579,30 @@ class ClientService
         ]);
 
         return $payment;
+    }
+
+    public function sendMessage(Request $request){
+        try{
+            $client_id = $request->client_id;
+            $subject = $request->subject;
+            $message = $request->message;
+
+            $client = Client::find($client_id);
+            $user = $client->user;
+            $textMessage = "<strong>Referente ao cliente</strong>: {$client->name}({$client->id})<br>";
+            $textMessage .= nl2br($message);
+
+            Mail::to($user->email)
+                ->send(new DefaultMail(
+                    name: $user->name,
+                    message: $textMessage,
+                    subjetc: $subject
+                ));
+
+            return ['status' => true, 'data' => null];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
     }
     
     public function makePolicy(Client $client)

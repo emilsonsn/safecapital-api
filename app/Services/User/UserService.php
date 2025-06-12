@@ -158,7 +158,7 @@ class UserService
                 'is_active' => ['required', 'boolean'],
                 'role' => ['required', 'in:Admin,Manager,Client'],
                 'attachments' => ['nullable', 'array'],
-                'password' => ['required', 'string'],
+                'password' => ['nullable', 'string'],
             ];
 
             $requestData = $request->all();
@@ -169,8 +169,6 @@ class UserService
                 throw new Exception($validator->errors(), 400);
             }
 
-            $auth = Auth::user();
-
             $usersWithEmailOrCnpj = User::where('email', $requestData['email'])
                 ->orWhere('cnpj', $requestData['cnpj'])
                 ->count();
@@ -178,6 +176,10 @@ class UserService
             if($usersWithEmailOrCnpj){
                 throw new Exception('Email ou Cnpj já existem no sistema.', 400);
             }
+
+            $generatedPassword = Str::random(10);
+
+            $requestData['password'] ??= $generatedPassword;
 
             $user = User::create($requestData);
     
@@ -196,8 +198,8 @@ class UserService
 
             if ($request->role == UserRoleEnum::Client->value) {
                 Mail::to($user->email)->send(new WelcomeMail($user->name));
-            }else{
-                Mail::to($user->email)->send(new AccountCreated($user->name, $user->email, $password));
+            }else{                
+                Mail::to($user->email)->send(new AccountCreated($user->name, $user->email, $requestData['password']));
             }
     
             return ['status' => true, 'data' => $user];

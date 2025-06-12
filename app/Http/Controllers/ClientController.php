@@ -75,6 +75,13 @@ class ClientController extends Controller
         return $this->response($result);
     }
 
+    public function sendMessage(Request $request){
+        $result = $this->clientService->sendMessage($request);
+
+        if($result['status']) $result['message'] = "Mensagem enviada com sucesso";
+        return $this->response($result);
+    }
+
     public function deleteAttachment($id){
         $result = $this->clientService->deleteAttachment($id);
 
