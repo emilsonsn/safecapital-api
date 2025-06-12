@@ -142,15 +142,38 @@ class ClientService
                     'phone' => $dataCorresponding['phone'],
                 ]);
 
-                $clientToUpdate['corresponding'] = $corresponding;
+                $client['corresponding'] = $corresponding;
             }
 
-            $ph3Result = $this->searchClienteInPH3($client);
-            $this->analizeClient($client, $ph3Result);
+            if(
+                $client->rental_value >= 1000 and
+                $client->rental_value <= 9000 and
+                $client->sumValue() <= 12000
+            ){
+                $ph3Result = $this->searchClienteInPH3($client);
+                $this->analizeClient($client, $ph3Result);
 
-            if($client->status != ClientStatusEnum::Approved && $client->corresponding){
-                $ph3Result = $this->searchClienteInPH3($client, true);
-                $this->analizeClient($client, $ph3Result, true);
+                if($client->status != ClientStatusEnum::Approved && $client->corresponding){
+                    $ph3Result = $this->searchClienteInPH3($client, true);
+                    $this->analizeClient($client, $ph3Result, true);
+                }
+            }
+
+            if($client->status == ClientStatusEnum::Pending){
+                $auth = Auth::user();
+
+                $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
+                $message = "Novo cliente pendente: {$client->name} ({$client->id}) adicionado pelo parceiro {$auth->name}.";
+                $subjetc = "Novo cliente pendente aguardando análise";
+
+                foreach($usersToReceiveEmail as $userToReceiveEmail){
+                    Mail::to($userToReceiveEmail->email)
+                        ->send(new DefaultMail(
+                            $userToReceiveEmail->name,
+                            $message,
+                            $subjetc 
+                        ));
+                }
             }
 
             return ['status' => true, 'data' => $client];

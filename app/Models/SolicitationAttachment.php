@@ -14,6 +14,8 @@ class SolicitationAttachment extends Model
     public $table = 'solicitation_attachments';
 
     public $fillable = [
+        'filename',
+        'description',
         'solicitation_id',
         'path'
     ];

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ClientStatusEnum;
 use App\Enums\PropertyTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,7 +41,8 @@ class Client extends Model
         'payment_form' => 'string',
         'complement' => 'string',
         'city' => 'string',
-        'state' => 'string',        
+        'state' => 'string',
+        'status' => ClientStatusEnum::class
     ];
 
     protected $fillable = [
@@ -88,5 +90,12 @@ class Client extends Model
 
     public function corresponding(): HasOne{
         return $this->hasOne(related: Corresponding::class);
+    }
+
+    public function sumValue(): float
+    {        
+        return $this->rental_value +
+            $this->property_tax +
+            $this->condominium_fee;
     }
 }
