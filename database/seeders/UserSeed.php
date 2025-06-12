@@ -14,15 +14,15 @@ class UserSeed extends Seeder
     public function run(): void
     {
         User::updateOrCreate([
-            'email' => 'admin@admin',
+            'email' => 'safecapitalgarantias@gmail.com',
         ],
         [
-            'name' => 'admin',
-            'surname' => 'do sistema',
-            'phone' => '83991236636',
-            'company_name' => 'TechSoul',
-            'password' => Hash::make('admin'),
-            'cnpj' => '50774377000176',
+            'name' => 'Safe Capital',
+            'surname' => 'Garantias',
+            'phone' => '',
+            'company_name' => '',
+            'password' => Hash::make('@123Mudar'),
+            'cnpj' => '53647890000194',
             'creci' => null,
             'is_active' => true,
             'validation' => null,
