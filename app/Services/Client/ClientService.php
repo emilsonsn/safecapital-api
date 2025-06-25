@@ -401,6 +401,7 @@ class ClientService
             }
 
             $clientToUpdate = Client::find($client_id);
+            $user = $clientToUpdate->user;
 
             if(!isset($clientToUpdate)) throw new Exception('Cliente não encontrado');
 
@@ -408,9 +409,9 @@ class ClientService
                 case UserValidationEnum::Accepted->value:
                     $clientToUpdate->status = ClientStatusEnum::Active->value;
                     $clientToUpdate->save();
-                    Mail::to($clientToUpdate->email)
+                    Mail::to($user->email)
                         ->send(new AnalisyContractMail(
-                            name: $clientToUpdate->name,
+                            name: $user->name,
                             subject: "Documentação aceita!",
                             textMessage: "Sua documentação foi revisada e já foi aprovada!",
                             justification: $request->justification ?? ''
@@ -421,9 +422,9 @@ class ClientService
                     $clientToUpdate->status = ClientStatusEnum::WaitingContract->value;
                     $clientToUpdate->policys()->delete();
                     $clientToUpdate->save();
-                    Mail::to($clientToUpdate->email)
+                    Mail::to($user->email)
                         ->send(new AnalisyContractMail(
-                            name: $clientToUpdate->name,
+                            name: $user->name,
                             subject: "Documentação não aceita!",
                             textMessage: "Sua documentação precisa de ajustes!",
                             justification: $request->justification ?? ''
@@ -432,9 +433,9 @@ class ClientService
                 case UserValidationEnum::Refused->value:
                     $clientToUpdate->status = ClientStatusEnum::Inactive->value;
                     $clientToUpdate->save();
-                    Mail::to($clientToUpdate->email)
+                    Mail::to($user->email)
                         ->send(new AnalisyContractMail(
-                            name: $clientToUpdate->name,
+                            name: $user->name,
                             subject: "Documentação reprovada!",
                             textMessage: "Sua documentação foi reprovada!",
                             justification: $request->justification ?? ''
