@@ -607,11 +607,19 @@ class ClientService
 
     public function sendMessage(Request $request){
         try{
-            $client_id = $request->client_id;
             $subject = $request->subject;
             $message = $request->message;
 
-            $client = Client::find($client_id);
+            if(isset($request->client_id)){
+                $client = Client::find($request->client_id);
+            }else{
+                $client = Client::where('contract_number', $request->contract_number)->first();
+            }
+
+            if(! isset($client)) {
+                throw new Exception('Cliente não encontrado', 400);
+            }
+
             $user = $client->user;
             $textMessage = "<strong>Referente ao cliente</strong>: {$client->name}({$client->id})<br>";
             $textMessage .= nl2br($message);
