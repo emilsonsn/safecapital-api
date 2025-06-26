@@ -56,7 +56,7 @@
 
 <body>
     <div class="email-container">
-        <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem?</h1>
+        <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem? Esperamos que sim.</h1>
         <p>{{ $textMessage }}</p>
         @if($justification)
             <p>

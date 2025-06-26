@@ -66,7 +66,7 @@
 
 <body>
     <div class="email-container">
-        <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem?</h1>
+        <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem? Esperamos que sim.</h1>
         <p>Infelizmente seu cadastro ainda não foi aceito.</p>
         <p>
             <h3>Justificativa:</h3>

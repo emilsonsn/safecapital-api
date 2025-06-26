@@ -57,7 +57,7 @@
 
 <body>
     <div class="email-container">
-        <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem?</h1>
+        <h1>Olá, <strong>{{ $name }}</strong>! Tudo bem? Esperamos que sim.</h1>
         <p>Recebemos sua solicitação de cadastro e iremos avaliar os dados e documentos inseridos.</p>
         <p>Em breve você receberá outro email com a resposta da validação. Esse processo pode levar até 3 dias.</p>
         

@@ -66,7 +66,7 @@
 
 <body>
     <div class="email-container">
-        <h1>Olá, <strong>{{ $userName }}</strong>! Tudo bem?</h1>
+        <h1>Olá, <strong>{{ $userName }}</strong>! Tudo bem? Esperamos que sim.</h1>
         <p>
             {!! $messageText !!}
         </p>
