@@ -537,7 +537,7 @@ class ClientService
         }
     
         $creditScore = $ph3Response['CreditScore']['D00'] ?? 0;
-        $hasLawProcesses = $ph3Response['ProcessNumber'] ?? 0; 
+        $hasLawProcesses = isset($ph3Response['LawProcesses']) && count($ph3Response['LawProcesses']);
         $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']) > 0;        
         $maxPendingValue =  $hasPendingIssues ? collect($ph3Response['Debits'])->sum('CurrentQuantity') : 0;
             
@@ -545,7 +545,7 @@ class ClientService
             return $setting['status'] === ClientStatusEnum::Approved->value &&
                    $creditScore >= $setting['start_score'] &&
                    $creditScore <= $setting['end_score'] &&
-                   ($setting['has_law_processes'] == false || $hasLawProcesses == 0) &&
+                   ($setting['has_law_processes'] == false || $hasLawProcesses) &&
                    ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
                    ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
         });
@@ -560,7 +560,7 @@ class ClientService
             return $setting['status'] === ClientStatusEnum::Pending->value &&
                    $creditScore >= $setting['start_score'] &&
                    $creditScore <= $setting['end_score'] &&
-                   ($setting['has_law_processes'] == false || $hasLawProcesses == 0) &&
+                   ($setting['has_law_processes'] == false || $hasLawProcesses) &&
                    ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
                    ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
         });
