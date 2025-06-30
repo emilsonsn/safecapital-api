@@ -208,11 +208,13 @@ class ClientService
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
                 'attachments' => ['nullable', 'array'],             
-            ];            
+            ];
+
+            $currentUser = Auth::user();
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = Auth::user()->id;
+            $requestData['user_id'] = $currentUser->id;
 
             $validator = Validator::make($requestData, $rules);
 
@@ -256,9 +258,10 @@ class ClientService
                 $clientToUpdate['corresponding'] = $corresponding;
             }
             
-            $oldStatus = $clientToUpdate->oldStatus;
+            $oldStatus = $clientToUpdate->status;
 
             if(
+                ! $currentUser->isAdmin() &&
                 $clientToUpdate->rental_value >= 1000 and
                 $clientToUpdate->rental_value <= 9000 and
                 $clientToUpdate->sumValue() <= 12000
@@ -272,7 +275,10 @@ class ClientService
                 }
             }
 
-            if($clientToUpdate->status == ClientStatusEnum::Pending && $oldStatus != ClientStatusEnum::Pending){
+            if( ! $currentUser->isAdmin() &&
+                $clientToUpdate->status == ClientStatusEnum::Pending &&
+                $oldStatus != ClientStatusEnum::Pending
+            ){
                 $auth = Auth::user();
 
                 $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
