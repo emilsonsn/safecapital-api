@@ -255,6 +255,39 @@ class ClientService
 
                 $clientToUpdate['corresponding'] = $corresponding;
             }
+            
+            $oldStatus = $clientToUpdate->oldStatus;
+
+            if(
+                $clientToUpdate->rental_value >= 1000 and
+                $clientToUpdate->rental_value <= 9000 and
+                $clientToUpdate->sumValue() <= 12000
+            ){
+                $ph3Result = $this->searchClienteInPH3($clientToUpdate);
+                $this->analizeClient($clientToUpdate, $ph3Result);
+
+                if($clientToUpdate->status != ClientStatusEnum::Approved && $clientToUpdate->corresponding){
+                    $ph3Result = $this->searchClienteInPH3($clientToUpdate, true);
+                    $this->analizeClient($clientToUpdate, $ph3Result, true);
+                }
+            }
+
+            if($clientToUpdate->status == ClientStatusEnum::Pending && $oldStatus != ClientStatusEnum::Pending){
+                $auth = Auth::user();
+
+                $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
+                $message = "Novo cliente pendente: {$clientToUpdate->name} ({$clientToUpdate->id}) adicionado pelo parceiro {$auth->name}.";
+                $subjetc = "Novo cliente pendente aguardando análise";
+
+                foreach($usersToReceiveEmail as $userToReceiveEmail){
+                    Mail::to($userToReceiveEmail->email)
+                        ->send(new DefaultMail(
+                            $userToReceiveEmail->name,
+                            $message,
+                            $subjetc 
+                        ));
+                }
+            }            
 
             return ['status' => true, 'data' => $clientToUpdate];
         } catch (Exception $error) {
@@ -545,7 +578,7 @@ class ClientService
             return $setting['status'] === ClientStatusEnum::Approved->value &&
                    $creditScore >= $setting['start_score'] &&
                    $creditScore <= $setting['end_score'] &&
-                   ($setting['has_law_processes'] == false || $hasLawProcesses) &&
+                   ($setting['has_law_processes'] == $hasLawProcesses) &&
                    ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
                    ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
         });
@@ -560,7 +593,7 @@ class ClientService
             return $setting['status'] === ClientStatusEnum::Pending->value &&
                    $creditScore >= $setting['start_score'] &&
                    $creditScore <= $setting['end_score'] &&
-                   ($setting['has_law_processes'] == false || $hasLawProcesses) &&
+                   ($setting['has_law_processes'] == $hasLawProcesses) &&
                    ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
                    ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
         });
