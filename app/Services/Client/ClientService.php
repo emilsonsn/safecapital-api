@@ -582,53 +582,52 @@ class ClientService
     private function analizeClient($client, $ph3Response, $hascorresponding = false)
     {
         $settings = Helpers::getCreditSettings();
-    
+
         if (!$ph3Response || !isset($ph3Response['CreditScore'])) {
             $client->status = ClientStatusEnum::Pending;
             $client->save();
             return;
         }
-    
+
         $creditScore = $ph3Response['CreditScore']['D00'] ?? 0;
-        $hasLawProcesses = isset($ph3Response['LawProcesses']) && count($ph3Response['LawProcesses']);
-        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']);        
-        $maxPendingValue =  $hasPendingIssues ? collect($ph3Response['Debits'])->sum('CurrentQuantity') : 0;
-            
-        $approvedConfig = collect($settings)->first(function ($setting) use ($creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue) {
-            return $setting['status'] === ClientStatusEnum::Approved->value &&
-                   $creditScore >= $setting['start_score'] &&
-                   $creditScore <= $setting['end_score'] &&
-                   ($setting['has_law_processes'] == $hasLawProcesses) &&
-                   (! $hasPendingIssues || ! $setting['has_pending_issues']) &&
-                   (!$hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
-        });
-            
-        if ($approvedConfig) {
-            $client->status = ClientStatusEnum::Approved;
-            $client->save();
-            return;
-        }
-    
-        $pendingConfig = collect($settings)->first(function ($setting) use ($creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue) {
-            return $setting['status'] === ClientStatusEnum::Pending->value &&
-                   $creditScore >= $setting['start_score'] &&
-                   $creditScore <= $setting['end_score'] &&
-                   ($setting['has_law_processes'] == $hasLawProcesses) &&
-                   (! $hasPendingIssues || ! $setting['has_pending_issues']) &&
-                   (!$hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
-        });
-    
-        if ($pendingConfig) {
-            $client->status = ClientStatusEnum::Pending;
-            $client->save();
-            return;
+        $hasLawProcesses = isset($ph3Response['LawProcesses']) && count($ph3Response['LawProcesses']) > 0;
+        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']) > 0;
+        $maxPendingValue = $hasPendingIssues ? collect($ph3Response['Debits'])->sum('CurrentQuantity') : 0;
+
+        $statusOrder = [
+            ClientStatusEnum::Approved,
+            ClientStatusEnum::Pending,
+        ];
+
+        foreach ($statusOrder as $status) {
+            $matched = collect($settings)->first(function ($setting) use (
+                $status, $creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue
+            ) {
+                $scoreOk = $creditScore >= $setting['start_score'] && $creditScore <= $setting['end_score'];
+                $lawProcessOk = ! $hasLawProcesses || $setting['has_law_processes'];
+                $pendingOk = ! $hasPendingIssues || $setting['has_pending_issues'];
+                $pendingValueOk = !$hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value'];
+
+                return $setting['status'] === $status->value &&
+                    $scoreOk &&
+                    $lawProcessOk &&
+                    $pendingOk &&
+                    $pendingValueOk;
+            });
+
+            if ($matched) {
+                $client->status = $status;
+                $client->save();
+                return;
+            }
         }
 
-        if(! $hascorresponding){
+        if (! $hascorresponding) {
             $client->status = ClientStatusEnum::Disapproved;
             $client->save();
         }
     }
+
 
     private function createPayment($client, $taxSetting){
 

@@ -15,8 +15,16 @@ class Helpers {
         ->all();
     }
 
-    public static function getCreditSettings(): array{
-        return CreditConfiguration::get()->all();
+    public static function getCreditSettings(): array
+    {
+        return CreditConfiguration::orderByRaw("
+            CASE status
+                WHEN 'approved' THEN 1
+                WHEN 'pending' THEN 2
+                WHEN 'disapproved' THEN 3
+                ELSE 4
+            END
+        ")->get()->all();
     }
 
     public static function getTaxSettings(): TaxSetting{
