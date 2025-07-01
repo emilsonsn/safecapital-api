@@ -20,6 +20,7 @@ use App\Traits\Doc4SignTrait;
 use App\Traits\MercadoPagoTrait;
 use App\Traits\PH3Trait;
 use Carbon\Carbon;
+use DB;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -113,6 +114,8 @@ class ClientService
                 throw new Exception($validator->errors(), 400);
             }
 
+            DB::beginTransaction();
+
             $client = Client::create($requestData);
 
             if($request->filled('attachments')){
@@ -155,6 +158,8 @@ class ClientService
 
                 if($client->status != ClientStatusEnum::Approved && $client->corresponding){
                     $ph3Result = $this->searchClienteInPH3($client, true);
+                    if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
+
                     $this->analizeClient($client, $ph3Result, true);
                 }
             }
@@ -176,8 +181,10 @@ class ClientService
                 }
             }
 
+            DB::commit();
             return ['status' => true, 'data' => $client];
         } catch (Exception $error) {
+            DB::rollBack();
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
@@ -226,6 +233,8 @@ class ClientService
 
             if(!isset($clientToUpdate)) throw new Exception('Cliente não encontrado');
 
+            DB::beginTransaction();
+
             $clientToUpdate->update($validator->validated());
 
             if($request->filled('attachments')){
@@ -267,6 +276,8 @@ class ClientService
                 $clientToUpdate->sumValue() <= 12000
             ){
                 $ph3Result = $this->searchClienteInPH3($clientToUpdate);
+                if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
+                
                 $this->analizeClient($clientToUpdate, $ph3Result);
 
                 if($clientToUpdate->status != ClientStatusEnum::Approved && $clientToUpdate->corresponding){
@@ -293,10 +304,13 @@ class ClientService
                             $subjetc 
                         ));
                 }
-            }            
-
+            }
+        
+            DB::commit();
+        
             return ['status' => true, 'data' => $clientToUpdate];
         } catch (Exception $error) {
+            DB::rollBack();
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }

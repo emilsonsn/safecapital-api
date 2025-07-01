@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Throwable;
 
 trait PH3Trait
 {
@@ -16,11 +17,12 @@ trait PH3Trait
         
         $client = new Client();
         $url = "{$this->baseUrl}/api/Account/Login";
+        $username = env('PH3_API_KEY');
 
         try {
             $response = $client->post($url, [
                 'json' => [
-                    'userName' => env('PH3_API_KEY'),
+                    'userName' => $username,
                 ],
                 'headers' => [
                     'Content-Type' => 'application/json',
@@ -30,7 +32,8 @@ trait PH3Trait
             $data = json_decode($response->getBody()->getContents(), true);
             $this->token = $data['data']['Token'] ?? null;
 
-        } catch (RequestException $e) {
+        } catch (Throwable $e) {
+            $teste = $e->getMessage();
             return null;
         }
     }
