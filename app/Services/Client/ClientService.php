@@ -591,7 +591,7 @@ class ClientService
     
         $creditScore = $ph3Response['CreditScore']['D00'] ?? 0;
         $hasLawProcesses = isset($ph3Response['LawProcesses']) && count($ph3Response['LawProcesses']);
-        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']) > 0;        
+        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']);        
         $maxPendingValue =  $hasPendingIssues ? collect($ph3Response['Debits'])->sum('CurrentQuantity') : 0;
             
         $approvedConfig = collect($settings)->first(function ($setting) use ($creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue) {
@@ -599,8 +599,8 @@ class ClientService
                    $creditScore >= $setting['start_score'] &&
                    $creditScore <= $setting['end_score'] &&
                    ($setting['has_law_processes'] == $hasLawProcesses) &&
-                   ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
-                   ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
+                   (! $hasPendingIssues || ! $setting['has_pending_issues']) &&
+                   (!$hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
         });
             
         if ($approvedConfig) {
@@ -614,8 +614,8 @@ class ClientService
                    $creditScore >= $setting['start_score'] &&
                    $creditScore <= $setting['end_score'] &&
                    ($setting['has_law_processes'] == $hasLawProcesses) &&
-                   ($setting['has_pending_issues'] == false || !$hasPendingIssues) &&
-                   ($setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
+                   (! $hasPendingIssues || ! $setting['has_pending_issues']) &&
+                   (!$hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value']);
         });
     
         if ($pendingConfig) {
