@@ -154,12 +154,14 @@ class ClientService
                 $client->sumValue() <= 12000
             ){
                 $ph3Result = $this->searchClienteInPH3($client);
+                
+                if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
                 $this->analizeClient($client, $ph3Result);
 
                 if($client->status != ClientStatusEnum::Approved && $client->corresponding){
                     $ph3Result = $this->searchClienteInPH3($client, true);
+                    
                     if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
-
                     $this->analizeClient($client, $ph3Result, true);
                 }
             }
@@ -176,7 +178,7 @@ class ClientService
                         ->send(new DefaultMail(
                             $userToReceiveEmail->name,
                             $message,
-                            $subjetc 
+                            $subjetc
                         ));
                 }
             }
@@ -276,12 +278,14 @@ class ClientService
                 $clientToUpdate->sumValue() <= 12000
             ){
                 $ph3Result = $this->searchClienteInPH3($clientToUpdate);
-                if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
                 
+                if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');                
                 $this->analizeClient($clientToUpdate, $ph3Result);
 
                 if($clientToUpdate->status != ClientStatusEnum::Approved && $clientToUpdate->corresponding){
                     $ph3Result = $this->searchClienteInPH3($clientToUpdate, true);
+                    
+                    if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
                     $this->analizeClient($clientToUpdate, $ph3Result, true);
                 }
             }
@@ -582,12 +586,6 @@ class ClientService
     private function analizeClient($client, $ph3Response, $hascorresponding = false)
     {
         $settings = Helpers::getCreditSettings();
-
-        if (!$ph3Response || !isset($ph3Response['CreditScore'])) {
-            $client->status = ClientStatusEnum::Pending;
-            $client->save();
-            return;
-        }
 
         $creditScore = $ph3Response['CreditScore']['D00'] ?? 0;
         $hasLawProcesses = isset($ph3Response['LawProcesses']) && count($ph3Response['LawProcesses']) > 0;

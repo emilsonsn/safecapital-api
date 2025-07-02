@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Throwable;
@@ -14,28 +15,29 @@ trait PH3Trait
     private function preparePh3()
     {
         $this->baseUrl = "https://api.ph3a.com.br/DataBusca";
-        
-        $client = new Client();
-        $url = "{$this->baseUrl}/api/Account/Login";
-        $username = env('PH3_API_KEY');
 
-        try {
-            $response = $client->post($url, [
-                'json' => [
-                    'userName' => $username,
-                ],
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                ],
-            ]);
+        $this->token = Cache::remember('ph3_api_token', now()->addMinutes(30), function () {
+            $client = new Client();
+            $url = "{$this->baseUrl}/api/Account/Login";
+            $username = env('PH3_API_KEY');
 
-            $data = json_decode($response->getBody()->getContents(), true);
-            $this->token = $data['data']['Token'] ?? null;
+            try {
+                $response = $client->post($url, [
+                    'json' => [
+                        'userName' => $username,
+                    ],
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                    ],
+                ]);
 
-        } catch (Throwable $e) {
-            $teste = $e->getMessage();
-            return null;
-        }
+                $data = json_decode($response->getBody()->getContents(), true);
+                return $data['data']['Token'] ?? null;
+
+            } catch (Throwable $e) {
+                return null;
+            }
+        });
     }
 
     public function searchClientForCpfOrCnpj($cpfOrCnpj)
