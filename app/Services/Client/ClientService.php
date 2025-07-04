@@ -590,6 +590,7 @@ class ClientService
 
     public function runSpiderForCpf(string $cpf, int $pollingSeconds = 2, int $maxAttempts = 7): array
     {
+        Log::info('Iniciando processos');
         $startResponse = $this->startSpiderCpf($cpf);
         $requestId = $startResponse['RequestId'] ?? null;
 
