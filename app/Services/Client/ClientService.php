@@ -567,13 +567,18 @@ class ClientService
         }
     }
 
-    private function searchClienteInPH3(Client $client, $hasCorresponding = false){
+    private function searchClienteInPH3(Client $client, $hasCorresponding = false)
+    {
         $cpfOrCnpj = $hasCorresponding ? $client->corresponding->cpf : $client->cpf;
 
         $this->preparePh3();
-        $response = $this->searchClientForCpfOrCnpj($cpfOrCnpj);
 
-        if(!isset($response)) return;
+        $response = $this->searchClientForCpfOrCnpj($cpfOrCnpj);
+        if (!isset($response)) return;
+
+        $spiderResult = $this->runSpiderForCpf($cpfOrCnpj);
+
+        $response['LawProcesses'] ??= $spiderResult['Data'] ?? [];        
 
         ClientPh3Analisy::create([
             'client_id' => $client->id,
@@ -581,6 +586,32 @@ class ClientService
         ]);
 
         return $response;
+    }
+
+    public function runSpiderForCpf(string $cpf, int $pollingSeconds = 2, int $maxAttempts = 7): array
+    {
+        $startResponse = $this->startSpiderCpf($cpf);
+        $requestId = $startResponse['RequestId'] ?? null;
+
+        if (! $requestId) {
+            return ['Data' => []];
+        }
+
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            sleep($pollingSeconds);
+
+            $result = $this->getSpiderResult($requestId);
+
+            if (!isset($result['Status'])) {
+                return ['Data' => []];
+            }
+
+            if ($result['Status'] == 200 || $result['Status'] == 203) {
+                return $result;
+            }
+        }
+
+        return ['error' => 'Tempo limite excedido para resultado da consulta Spider'];
     }
 
     private function analizeClient($client, $ph3Response, $hascorresponding = false)
@@ -625,7 +656,6 @@ class ClientService
             $client->save();
         }
     }
-
 
     private function createPayment($client, $taxSetting){
 
