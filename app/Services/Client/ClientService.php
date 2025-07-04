@@ -576,6 +576,8 @@ class ClientService
         $response = $this->searchClientForCpfOrCnpj($cpfOrCnpj);
         if (!isset($response)) return;
 
+        Log::info(json_encode($response));
+
         $spiderResult = $this->runSpiderForCpf($cpfOrCnpj);
 
         $response['LawProcesses'] ??= $spiderResult['Data'] ?? [];        
@@ -592,6 +594,8 @@ class ClientService
     {
         Log::info('Iniciando processos');
         $startResponse = $this->startSpiderCpf($cpf);
+
+        Log::info(json_encode($startResponse));
         $requestId = $startResponse['RequestId'] ?? null;
 
         if (! $requestId) {
