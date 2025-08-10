@@ -16,6 +16,7 @@ use App\Models\ClientPayment;
 use App\Models\ClientPh3Analisy;
 use App\Models\Corresponding;
 use App\Models\PolicyDocument;
+use App\Traits\ApiaryTrait;
 use App\Traits\Doc4SignTrait;
 use App\Traits\MercadoPagoTrait;
 use App\Traits\PH3Trait;
@@ -24,17 +25,19 @@ use DB;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use PhpOffice\PhpWord\TemplateProcessor;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Log;
 use Mail;
-use Illuminate\Support\Str;
+use PhpOffice\PhpWord\TemplateProcessor;
 
 class ClientService
 {
+    use ApiaryTrait;
+    use Doc4SignTrait;
+    use MercadoPagoTrait;
+    use PH3Trait;
 
-    use PH3Trait, MercadoPagoTrait, Doc4SignTrait;
-    
     public function search($request)
     {
         try {
@@ -47,23 +50,23 @@ class ClientService
             $clients = Client::with('attachments', 'policys', 'corresponding')
                 ->orderBy('id', 'desc');
 
-            if(isset($search_term)){
-                $clients->where(function($query) use ($search_term){
+            if (isset($search_term)) {
+                $clients->where(function ($query) use ($search_term) {
                     $query->where('name', 'LIKE', "%{$search_term}%")
                         ->orWhere('surname', 'LIKE', "%{$search_term}%")
                         ->orWhere('cpf', 'LIKE', "%{$search_term}%")
                         ->orWhere('email', 'LIKE', "%{$search_term}%")
                         ->orWhere('phone', 'LIKE', "%{$search_term}%");
-                });                    
+                });
             }
 
-            if(isset($status)){
+            if (isset($status)) {
                 $clients->where('status', $status);
             }
 
-            if(isset($user_id) && $auth->role == UserRoleEnum::Admin->value){
+            if (isset($user_id) && $auth->role == UserRoleEnum::Admin->value) {
                 $clients->where('user_id', $user_id);
-            }else if ($auth->role != UserRoleEnum::Admin->value){
+            } elseif ($auth->role != UserRoleEnum::Admin->value) {
                 $clients->where('user_id', $auth->id);
             }
 
@@ -118,8 +121,8 @@ class ClientService
 
             $client = Client::create($requestData);
 
-            if($request->filled('attachments')){
-                foreach($request->attachments as $attachment){
+            if ($request->filled('attachments')) {
+                foreach ($request->attachments as $attachment) {
                     $path = $attachment['file']->store('attachments', 'public');
                     ClientAttachment::firstOrCreate([
                         'id' => $attachment['id'] ?? null,
@@ -132,11 +135,11 @@ class ClientService
                 }
             }
 
-            if($request->corresponding && isset($request->corresponding['cpf'])){
+            if ($request->corresponding && isset($request->corresponding['cpf'])) {
                 $dataCorresponding = $request->corresponding;
                 $corresponding = Corresponding::updateOrCreate([
                     'id' => $dataCorresponding['cpf'] ?? '',
-                ],[
+                ], [
                     'client_id' => $client->id,
                     'cpf' => $dataCorresponding['cpf'],
                     'fullname' => $dataCorresponding['fullname'],
@@ -148,32 +151,37 @@ class ClientService
                 $client['corresponding'] = $corresponding;
             }
 
-            if(
+            if (
                 $client->rental_value >= 1000 and
                 $client->rental_value <= 9000 and
                 $client->sumValue() <= 12000
-            ){
-                $ph3Result = $this->searchClienteInPH3($client);
-                
-                if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
-                $this->analizeClient($client, $ph3Result);
+            ) {
+                $result = $this->searchCustomerCreditHistory($client);
 
-                if($client->status != ClientStatusEnum::Approved && $client->corresponding){
-                    $ph3Result = $this->searchClienteInPH3($client, true);
-                    
-                    if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
-                    $this->analizeClient($client, $ph3Result, true);
+                if (isset($result['suite']['erro']) && $result['suite']['erro']) {
+                    throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
+                }
+
+                $this->analizeClient($client, $result);
+
+                if ($client->status != ClientStatusEnum::Approved && $client->corresponding) {
+                    $result = $this->searchCustomerCreditHistory($client, true);
+
+                    if (isset($result['suite']['erro']) && $result['suite']['erro']) {
+                        throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
+                    }
+                    $this->analizeClient($client, $result, true);
                 }
             }
 
-            if($client->status == ClientStatusEnum::Pending){
+            if ($client->status == ClientStatusEnum::Pending) {
                 $auth = Auth::user();
 
                 $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
                 $message = "Novo cliente pendente: {$client->name} ({$client->id}) adicionado pelo parceiro {$auth->name}.";
-                $subjetc = "Novo cliente pendente aguardando análise";
+                $subjetc = 'Novo cliente pendente aguardando análise';
 
-                foreach($usersToReceiveEmail as $userToReceiveEmail){
+                foreach ($usersToReceiveEmail as $userToReceiveEmail) {
                     Mail::to($userToReceiveEmail->email)
                         ->send(new DefaultMail(
                             $userToReceiveEmail->name,
@@ -184,9 +192,11 @@ class ClientService
             }
 
             DB::commit();
+
             return ['status' => true, 'data' => $client];
         } catch (Exception $error) {
             DB::rollBack();
+
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
@@ -216,7 +226,7 @@ class ClientService
                 'complement' => ['nullable', 'string'],
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
-                'attachments' => ['nullable', 'array'],             
+                'attachments' => ['nullable', 'array'],
             ];
 
             $currentUser = Auth::user();
@@ -233,14 +243,16 @@ class ClientService
 
             $clientToUpdate = Client::find($user_id);
 
-            if(!isset($clientToUpdate)) throw new Exception('Cliente não encontrado');
+            if (! isset($clientToUpdate)) {
+                throw new Exception('Cliente não encontrado');
+            }
 
             DB::beginTransaction();
 
             $clientToUpdate->update($validator->validated());
 
-            if($request->filled('attachments')){
-                foreach($request->attachments as $attachment){
+            if ($request->filled('attachments')) {
+                foreach ($request->attachments as $attachment) {
                     $path = $attachment['file']->store('attachments', 'public');
                     ClientAttachment::firstOrCreate([
                         'id' => $attachment['id'] ?? null,
@@ -253,11 +265,11 @@ class ClientService
                 }
             }
 
-            if($request->corresponding && isset($request->corresponding['cpf'])){
+            if ($request->corresponding && isset($request->corresponding['cpf'])) {
                 $dataCorresponding = $request->corresponding;
                 $corresponding = Corresponding::updateOrCreate([
                     'id' => $dataCorresponding['cpf'] ?? '',
-                ],[
+                ], [
                     'client_id' => $clientToUpdate->id,
                     'cpf' => $dataCorresponding['cpf'],
                     'fullname' => $dataCorresponding['fullname'],
@@ -268,77 +280,89 @@ class ClientService
 
                 $clientToUpdate['corresponding'] = $corresponding;
             }
-            
+
             $oldStatus = $clientToUpdate->status;
 
-            if(
+            if (
                 ! $currentUser->isAdmin() &&
                 $clientToUpdate->rental_value >= 1000 and
                 $clientToUpdate->rental_value <= 9000 and
                 $clientToUpdate->sumValue() <= 12000
-            ){
-                $ph3Result = $this->searchClienteInPH3($clientToUpdate);
-                
-                if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');                
-                $this->analizeClient($clientToUpdate, $ph3Result);
+            ) {
+                $result = $this->searchCustomerCreditHistory($clientToUpdate);
 
-                if($clientToUpdate->status != ClientStatusEnum::Approved && $clientToUpdate->corresponding){
-                    $ph3Result = $this->searchClienteInPH3($clientToUpdate, true);
-                    
-                    if (isset($ph3Result['error'])) throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
-                    $this->analizeClient($clientToUpdate, $ph3Result, true);
+                if (isset($result[0]['suite']['erro']) && $result[0]['suite']['erro'] == 'true') {
+                    throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
+                }
+
+                $this->analizeClient($clientToUpdate, $result);
+
+                if ($clientToUpdate->status != ClientStatusEnum::Approved && $clientToUpdate->corresponding) {
+                    $result = $this->searchCustomerCreditHistory($clientToUpdate, true);
+
+                    if (isset($result['suite']['erro']) && $result['suite']['erro']) {
+                        throw new Exception('Erro ao consultar histórico de crédito do cliente. Por favor, tente novamente.');
+                    }
+                    $this->analizeClient($clientToUpdate, $result, true);
                 }
             }
 
-            if( ! $currentUser->isAdmin() &&
+            if (! $currentUser->isAdmin() &&
                 $clientToUpdate->status == ClientStatusEnum::Pending &&
                 $oldStatus != ClientStatusEnum::Pending
-            ){
+            ) {
                 $auth = Auth::user();
 
                 $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
                 $message = "Novo cliente pendente: {$clientToUpdate->name} ({$clientToUpdate->id}) adicionado pelo parceiro {$auth->name}.";
-                $subjetc = "Novo cliente pendente aguardando análise";
+                $subjetc = 'Novo cliente pendente aguardando análise';
 
-                foreach($usersToReceiveEmail as $userToReceiveEmail){
+                foreach ($usersToReceiveEmail as $userToReceiveEmail) {
                     Mail::to($userToReceiveEmail->email)
                         ->send(new DefaultMail(
                             $userToReceiveEmail->name,
                             $message,
-                            $subjetc 
+                            $subjetc
                         ));
                 }
             }
-        
+
             DB::commit();
-        
+
             return ['status' => true, 'data' => $clientToUpdate];
         } catch (Exception $error) {
             DB::rollBack();
+
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
 
-    public function delete($id){
-        try{
+    public function delete($id)
+    {
+        try {
             $client = Client::find($id);
 
-            if(!$client) throw new Exception('Cliente não encontrado');
+            if (! $client) {
+                throw new Exception('Cliente não encontrado');
+            }
 
             $clientName = $client->name;
             $client->delete();
 
             return ['status' => true, 'data' => $clientName];
-        }catch(Exception $error) {
+        } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
 
-    public function accept($id){
-        try{
+    public function accept($id)
+    {
+        try {
             $client = Client::find($id);
 
-            if(!$client) throw new Exception('Cliente não encontrado');
+            if (! $client) {
+                throw new Exception('Cliente não encontrado');
+            }
 
             $auth = Auth::user();
 
@@ -348,26 +372,26 @@ class ClientService
 
             $paymentUrl = $payment['init_point'];
 
-            $subjetc = "Safe Capital - Taxa do seguro";
+            $subjetc = 'Safe Capital - Taxa do seguro';
 
             Mail::to($client->email)
                 ->send(new PaymentMail(
                     $client->name,
                     $taxSetting->tax,
                     $paymentUrl,
-                    $subjetc 
+                    $subjetc
                 ));
 
             $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
-            $subjetc = "Novo cliente aceito";
+            $subjetc = 'Novo cliente aceito';
             $message = "Cliente {$client->name} foi aceito pelo parceiro {$auth->name}.";
 
-            foreach($usersToReceiveEmail as $userToReceiveEmail){
+            foreach ($usersToReceiveEmail as $userToReceiveEmail) {
                 Mail::to($userToReceiveEmail->email)
                     ->send(new DefaultMail(
                         $userToReceiveEmail->name,
-                         $message,
-                        $subjetc 
+                        $message,
+                        $subjetc
                     ));
             }
 
@@ -376,48 +400,48 @@ class ClientService
             $client->save();
 
             return ['status' => true, 'data' => $client];
-        }catch(Exception $error) {
+        } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
-    }    
+    }
 
     public function createPolicyDocument(Request $request)
     {
         try {
             $rules = [
                 'client_id' => ['required', 'integer'],
-                'attachments' => ['required', 'array'],                
+                'attachments' => ['required', 'array'],
             ];
-    
+
             $validator = Validator::make($request->all(), $rules);
-    
+
             if ($validator->fails()) {
                 throw new Exception($validator->errors()->first(), 400);
             }
 
             $client = Client::with('policys')->find($request->client_id);
 
-            if(!isset($client)){
+            if (! isset($client)) {
                 throw new Exception('Cliente não encontrado', 400);
             }
-            
-            if($client->policys()->count()){
+
+            if ($client->policys()->count()) {
                 throw new Exception('Esse cliente já possui contrato anexado', 400);
             }
-    
+
             $requestData = $request->all();
 
-            foreach($requestData['attachments'] as $attachment){
+            foreach ($requestData['attachments'] as $attachment) {
                 $file = $attachment['file'];
                 $path = $file->store('policy-documents', 'public');
                 $requestData['path'] = $path;
-                $requestData['filename'] = $file->getClientOriginalName();                
-                
+                $requestData['filename'] = $file->getClientOriginalName();
+
                 $requestData['due_date'] = Carbon::now()->addYear();
                 $requestData['contract_number'] = $client->contract_number ?? Carbon::now()->format('YmdHis');
-                
+
                 $policyDocument = PolicyDocument::create($requestData);
-            }            
+            }
 
             $client->status = ClientStatusEnum::WaitingAnalysis->value;
             $client->save();
@@ -427,16 +451,16 @@ class ClientService
             $usersToReceiveEmail = Helpers::getAdminAndManagerUsers();
 
             $message = "Contrato do cliente {$client->name} anexado pelo parceiro {$auth->name}.";
-            $subjetc = "Contrato anexado e aguardando validação";
-            foreach($usersToReceiveEmail as $userToReceiveEmail){
+            $subjetc = 'Contrato anexado e aguardando validação';
+            foreach ($usersToReceiveEmail as $userToReceiveEmail) {
                 Mail::to($userToReceiveEmail->email)
                     ->send(new DefaultMail(
                         $userToReceiveEmail->name,
-                         $message,
-                        $subjetc 
+                        $message,
+                        $subjetc
                     ));
             }
-    
+
             return ['status' => true, 'data' => $policyDocument];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
@@ -460,30 +484,32 @@ class ClientService
             $clientToUpdate = Client::find($client_id);
             $user = $clientToUpdate->user;
 
-            if(!isset($clientToUpdate)) throw new Exception('Cliente não encontrado');
+            if (! isset($clientToUpdate)) {
+                throw new Exception('Cliente não encontrado');
+            }
 
-            switch($request->validation){
+            switch ($request->validation) {
                 case UserValidationEnum::Accepted->value:
                     $clientToUpdate->status = ClientStatusEnum::Active->value;
                     $clientToUpdate->save();
                     Mail::to($user->email)
                         ->send(new AnalisyContractMail(
                             name: $user->name,
-                            subject: "Documentação aceita!",
-                            textMessage: "Sua documentação foi revisada e já foi aprovada!",
+                            subject: 'Documentação aceita!',
+                            textMessage: 'Sua documentação foi revisada e já foi aprovada!',
                             justification: $request->justification ?? ''
                         )
-                    );
+                        );
                     break;
-                case UserValidationEnum::Return->value: 
+                case UserValidationEnum::Return->value:
                     $clientToUpdate->status = ClientStatusEnum::WaitingContract->value;
                     $clientToUpdate->policys()->delete();
                     $clientToUpdate->save();
                     Mail::to($user->email)
                         ->send(new AnalisyContractMail(
                             name: $user->name,
-                            subject: "Documentação não aceita!",
-                            textMessage: "Sua documentação precisa de ajustes!",
+                            subject: 'Documentação não aceita!',
+                            textMessage: 'Sua documentação precisa de ajustes!',
                             justification: $request->justification ?? ''
                         ));
                     break;
@@ -493,8 +519,8 @@ class ClientService
                     Mail::to($user->email)
                         ->send(new AnalisyContractMail(
                             name: $user->name,
-                            subject: "Documentação reprovada!",
-                            textMessage: "Sua documentação foi reprovada!",
+                            subject: 'Documentação reprovada!',
+                            textMessage: 'Sua documentação foi reprovada!',
                             justification: $request->justification ?? ''
                         ));
                     break;
@@ -506,7 +532,7 @@ class ClientService
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
-    } 
+    }
 
     public function updatePolicyDocument(Request $request, $id)
     {
@@ -514,30 +540,30 @@ class ClientService
             $rules = [
                 'contract_number' => ['required', 'string'],
             ];
-    
+
             $validator = Validator::make($request->all(), $rules);
-    
+
             if ($validator->fails()) {
                 throw new Exception($validator->errors()->first(), 400);
             }
 
             $policyDocument = PolicyDocument::findOrFail($id);
-    
+
             $requestData = $request->all();
 
             $policyDocument->update($requestData);
-    
+
             return ['status' => true, 'data' => $policyDocument];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
-    }    
+    }
 
     public function deletePolicyDocument($id)
     {
         try {
             $policyDocument = PolicyDocument::findOrFail($id);
-    
+
             $policyDocumentFileName = $policyDocument->filename;
 
             $policyDocument->delete();
@@ -545,46 +571,49 @@ class ClientService
             $client = $policyDocument->client();
             $client->status = ClientStatusEnum::WaitingContract->value;
             $client->save();
-    
+
             return ['status' => true, 'data' => $policyDocumentFileName];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
-    }      
+    }
 
-    public function deleteAttachment($id){
-        try{
+    public function deleteAttachment($id)
+    {
+        try {
             $clientAttachment = ClientAttachment::find($id);
 
-            if(!$clientAttachment) throw new Exception('Cliente não encontrado');
+            if (! $clientAttachment) {
+                throw new Exception('Cliente não encontrado');
+            }
 
             $attachmentName = $clientAttachment->filename;
             $clientAttachment->delete();
 
             return ['status' => true, 'data' => $attachmentName];
-        }catch(Exception $error) {
+        } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
 
-    private function searchClienteInPH3(Client $client, $hasCorresponding = false)
+    private function searchCustomerCreditHistory(Client $client, $hasCorresponding = false)
     {
-        $cpfOrCnpj = $hasCorresponding ? $client->corresponding->cpf : $client->cpf;
+        $cpf = $hasCorresponding ? $client->corresponding->cpf : $client->cpf;
 
-        $this->preparePh3();
-
-        $response = $this->searchClientForCpfOrCnpj($cpfOrCnpj);
-        if (!isset($response)) return;
+        $response = $this->consultarCpf($cpf);
+        if (! isset($response)) {
+            return;
+        }
 
         Log::info(json_encode($response));
 
-        $spiderResult = $this->runSpiderForCpf($cpfOrCnpj);
+        $spiderResult = $this->consultarProcessosPorCpf($cpf);
 
-        $response['LawProcesses'] ??= $spiderResult['Data'] ?? [];        
+        $response['LawProcesses'] = $spiderResult['Result'][0]['Processes']['Lawsuits'] ?? [];
 
         ClientPh3Analisy::create([
             'client_id' => $client->id,
-            'response' => json_encode($response)
+            'response' => json_encode($response),
         ]);
 
         return $response;
@@ -607,7 +636,7 @@ class ClientService
 
             $result = $this->getSpiderResult($requestId);
 
-            if (!isset($result['Status'])) {
+            if (! isset($result['Status'])) {
                 return ['Data' => []];
             }
 
@@ -619,14 +648,22 @@ class ClientService
         return ['error' => 'Tempo limite excedido para resultado da consulta Spider'];
     }
 
-    private function analizeClient($client, $ph3Response, $hascorresponding = false)
+    private function analizeClient($client, $response, $hascorresponding = false)
     {
         $settings = Helpers::getCreditSettings();
 
-        $creditScore = $ph3Response['CreditScore']['D00'] ?? 0;
-        $hasLawProcesses = isset($ph3Response['LawProcesses']) && count($ph3Response['LawProcesses']) > 0;
-        $hasPendingIssues = isset($ph3Response['Debits']) && count($ph3Response['Debits']) > 0;
-        $maxPendingValue = $hasPendingIssues ? collect($ph3Response['Debits'])->sum('CurrentQuantity') : 0;
+        $scores = collect($response[1]['dadosScoreRenda'] ?? []);
+        $p5 = $scores->first(fn ($s) => strtolower($s['nome_score'] ?? '') === 'p5');
+        $creditScore = (int) ($p5['score'] ?? ($scores->first()['score'] ?? 0));
+
+        $hasLawProcesses = isset($response['LawProcesses']) && count($response['LawProcesses']) > 0;
+
+        $restricoes = collect($response[1]['restricoesDetalhe'] ?? []);
+        $hasPendingIssues = $restricoes->isNotEmpty();
+
+        $maxPendingValue = $hasPendingIssues
+            ? (float) $restricoes['valor']
+            : 0;
 
         $statusOrder = [
             ClientStatusEnum::Approved,
@@ -640,7 +677,7 @@ class ClientService
                 $scoreOk = $creditScore >= $setting['start_score'] && $creditScore <= $setting['end_score'];
                 $lawProcessOk = ! $hasLawProcesses || $setting['has_law_processes'];
                 $pendingOk = ! $hasPendingIssues || $setting['has_pending_issues'];
-                $pendingValueOk = !$hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value'];
+                $pendingValueOk = ! $hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value'];
 
                 return $setting['status'] === $status->value &&
                     $scoreOk &&
@@ -652,6 +689,7 @@ class ClientService
             if ($matched) {
                 $client->status = $status;
                 $client->save();
+
                 return;
             }
         }
@@ -662,7 +700,8 @@ class ClientService
         }
     }
 
-    private function createPayment($client, $taxSetting){
+    private function createPayment($client, $taxSetting)
+    {
 
         $this->prepareMercadoPago(
             $client->email,
@@ -672,7 +711,7 @@ class ClientService
         $externalReference = (string) Str::uuid();
         $payment = $this->makePayment(externalReference: $externalReference);
 
-        if(!isset($payment['init_point'])){
+        if (! isset($payment['init_point'])) {
             Log::error('Erro no pagamento', $payment);
             throw new Exception('Falha ao gerar pagamento');
         }
@@ -690,18 +729,19 @@ class ClientService
         return $payment;
     }
 
-    public function sendMessage(Request $request){
-        try{
+    public function sendMessage(Request $request)
+    {
+        try {
             $subject = $request->subject;
             $message = $request->message;
 
-            if(isset($request->client_id)){
+            if (isset($request->client_id)) {
                 $client = Client::find($request->client_id);
-            }else{
+            } else {
                 $client = Client::where('contract_number', $request->contract_number)->first();
             }
 
-            if(! isset($client)) {
+            if (! isset($client)) {
                 throw new Exception('Cliente não encontrado', 400);
             }
 
@@ -721,22 +761,22 @@ class ClientService
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
-    
+
     public function makePolicy(Client $client)
     {
         $this->prepareDoc4Sign();
-    
+
         $templatePath = storage_path('app/templates/policy_template.docx');
-        $fileName = 'policy_' . Str::uuid() . '.docx';
-        $filledPath = storage_path('app/policies/' . $fileName);
-    
+        $fileName = 'policy_'.Str::uuid().'.docx';
+        $filledPath = storage_path('app/policies/'.$fileName);
+
         $template = new TemplateProcessor($templatePath);
 
         $template->setValue('contract_number', $client->contract_number);
         $template->setValue('date', now()->format('d/m/Y'));
-        $template->setValue('policy_value', 'R$ ' . number_format($client->policy_value, 2, ',', '.'));
-        $template->setValue('month_value', 'R$ ' . number_format(($client->policy_value / 12), 2, ',', '.'));
-        
+        $template->setValue('policy_value', 'R$ '.number_format($client->policy_value, 2, ',', '.'));
+        $template->setValue('month_value', 'R$ '.number_format(($client->policy_value / 12), 2, ',', '.'));
+
         $template->setValue('address', $client->street);
         $template->setValue('number', $client->number);
         $template->setValue('complement', $client->complement ?? '');
@@ -745,45 +785,45 @@ class ClientService
         $template->setValue('neighborhood', $client->neighborhood);
         $template->setValue('city', $client->city);
         $template->setValue('state', $client->state);
-        
-        $template->setValue('name', $client->name . ' ' . $client->surname);
+
+        $template->setValue('name', $client->name.' '.$client->surname);
         $template->setValue('cpf', $client->cpf);
         $template->setValue('email', $client->email);
         $template->setValue('birthday', Carbon::parse($client->birthday)->format('d/m/Y'));
         $template->setValue('phone', $client->phone);
-        
+
         $template->setValue('corresponding_name', $client->corresponding?->name ?? '');
         $template->setValue('corresponding_cpf', $client->corresponding->cpf ?? '');
         $template->setValue('corresponding_email', $client->corresponding?->email ?? '');
         $template->setValue('corresponding_birthday', $client->corresponding?->birthday?->format('d/m/Y') ?? '');
         $template->setValue('corresponding_phone', $client->corresponding?->phone ?? '');
-        
+
         $template->saveAs($filledPath);
 
         $this->prepareDoc4Sign();
-    
-        $upload = $this->uploadDocument( $filledPath, $fileName);
+
+        $upload = $this->uploadDocument($filledPath, $fileName);
         $documentUuid = $upload['uuid'];
 
         $client->doc4sign_document_uuid = $documentUuid;
         $client->save();
-    
-        $this->createSigner($documentUuid, [            
-                [
-                    'email' => $client->email,
-                    'act' => '1',
-                    'foreign' => '0',
-                    'certificadoicpbr' => '0',
-                    'assinatura_presencial' => '0',
-                    'docauthandselfie' => '1',
-                    'embed_methodauth' => 'email',
-                    'upload_allow' => '0',
-                    'certificadoicpbr_cpf' => $client->cpf,
-                ]            
+
+        $this->createSigner($documentUuid, [
+            [
+                'email' => $client->email,
+                'act' => '1',
+                'foreign' => '0',
+                'certificadoicpbr' => '0',
+                'assinatura_presencial' => '0',
+                'docauthandselfie' => '1',
+                'embed_methodauth' => 'email',
+                'upload_allow' => '0',
+                'certificadoicpbr_cpf' => $client->cpf,
+            ],
         ]);
-    
+
         $this->sendToSign($documentUuid);
-    
-        $this->registerWebhook($documentUuid, route('webhook.d4sign'));    
+
+        $this->registerWebhook($documentUuid, route('webhook.d4sign'));
     }
 }
