@@ -39,6 +39,13 @@ class SolicitationController extends Controller
         return $this->response($result);
     }
 
+    public function close(Request $request, $id){
+        $result = $this->solicitationService->close($request, $id);
+
+        if($result['status']) $result['message'] = "Solicitação fechada com sucesso";
+        return $this->response($result);
+    } 
+
     public function createMessage(Request $request){
         $result = $this->solicitationService->createMessage($request);
 

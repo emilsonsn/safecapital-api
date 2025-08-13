@@ -2,6 +2,7 @@
 
 namespace App\Services\Solicitation;
 
+use App\Enums\SolicitationStatusEnum;
 use App\Enums\UserRoleEnum;
 use App\Helpers\Helpers;
 use App\Mail\DefaultMail;
@@ -206,9 +207,9 @@ class SolicitationService
         }
     }
 
-    public function update($request, $user_id)
+    public function update($request, $solicitation_id)
     {
-        try {
+        try {            
             $rules = [
                 'contract_number' => ['required', 'string', 'max:255'],
                 'subject' => ['nullable', 'string', 'max:255'],
@@ -218,13 +219,12 @@ class SolicitationService
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = Auth::user()->id;
-
             $validator = Validator::make($requestData, $rules);
 
             if ($validator->fails()) throw new Exception($validator->errors());
 
-            $solicitationToUpdate = Solicitation::find($user_id);
+            $solicitationToUpdate = Solicitation::where('id', $solicitation_id)
+                ->first();
 
             if($request->filled('items') && count($request->items)){
                 foreach($request->items as $item){
@@ -239,15 +239,63 @@ class SolicitationService
                 }
             }
 
+            $oldStatus = $solicitationToUpdate->status;
+
             if(!isset($solicitationToUpdate)) throw new Exception('Solicitação não encontrada');
 
             $solicitationToUpdate->update($validator->validated());
+            
+            if($oldStatus !== $solicitationToUpdate->status){
+                $message = "Seu chamado foi atualizado pela nossa equipe. Acesse a plataforma para conferir.";
+                $subjetc = "Chamado atualizado";
+                Mail::to($solicitationToUpdate->user->email)
+                    ->send(new DefaultMail(
+                        $solicitationToUpdate->user->name,
+                        $message,
+                        $subjetc 
+                    ));
+            }
 
             return ['status' => true, 'data' => $solicitationToUpdate];
         } catch (Exception $error) {
             return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
         }
     }
+
+    public function close($request, $solicitation_id)
+    {
+        try {
+            $solicitationToClose = Solicitation::where('id', $solicitation_id)
+                ->first();
+
+            if(!isset($solicitationToClose)) {
+                throw new Exception('Solicitação não encontrada');
+            }
+
+            $solicitationToClose->update([
+                'status' => 'Completed'
+            ]);
+
+            $adminAndManagers = Helpers::getAdminAndManagerUsers();
+
+            if(count($adminAndManagers)){
+                $message = "Cliente: {$solicitationToClose->user->name} fechou o chamado de inadimplência.";
+                $subjetc = "Inadimplência fechada pelo cliente";
+                foreach($adminAndManagers as $adminOrManager){
+                    Mail::to($adminOrManager->email)
+                        ->send(new DefaultMail(
+                            $adminOrManager->name,
+                            $message,
+                            $subjetc 
+                        ));
+                }
+            }        
+
+            return ['status' => true, 'data' => $solicitationToClose];
+        } catch (Exception $error) {
+            return ['status' => false, 'error' => $error->getMessage(), 'statusCode' => 400];
+        }
+    }    
 
     public function delete($id){
         try{

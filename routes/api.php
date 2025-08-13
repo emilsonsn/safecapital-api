@@ -65,6 +65,7 @@ Route::middleware(['jwt'])->group(function(){
             Route::get('{id}', [SolicitationController::class, 'getById']);
             Route::post('create', [SolicitationController::class, 'create']);
             Route::patch('{id}', [SolicitationController::class, 'update']);
+            Route::patch('/close/{id}', [SolicitationController::class, 'close']);
             Route::post('create-message', [SolicitationController::class, 'createMessage']);
             Route::delete('{id}', [SolicitationController::class, 'delete']);   
             Route::delete('item/{id}', [SolicitationController::class, 'deleteItem']);                    

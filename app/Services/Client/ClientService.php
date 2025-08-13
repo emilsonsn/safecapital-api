@@ -17,6 +17,7 @@ use App\Models\ClientPh3Analisy;
 use App\Models\Corresponding;
 use App\Models\PolicyDocument;
 use App\Traits\ApiaryTrait;
+use App\Traits\BlocksCpfByRecentDisapproval;
 use App\Traits\Doc4SignTrait;
 use App\Traits\MercadoPagoTrait;
 use App\Traits\PH3Trait;
@@ -30,6 +31,7 @@ use Illuminate\Support\Str;
 use Log;
 use Mail;
 use PhpOffice\PhpWord\TemplateProcessor;
+use App\Models\ClientAnalisy;
 
 class ClientService
 {
@@ -37,6 +39,7 @@ class ClientService
     use Doc4SignTrait;
     use MercadoPagoTrait;
     use PH3Trait;
+    use BlocksCpfByRecentDisapproval;
 
     public function search($request)
     {
@@ -117,6 +120,10 @@ class ClientService
                 throw new Exception($validator->errors(), 400);
             }
 
+            if ($this->hasRecentDisapproval($requestData['cpf'])) {
+                throw new Exception('CPF com reprovação em análise nos últimos 6 meses', 422);
+            }
+
             DB::beginTransaction();
 
             $client = Client::create($requestData);
@@ -150,6 +157,8 @@ class ClientService
 
                 $client['corresponding'] = $corresponding;
             }
+
+            $hascorresponding = $client['corresponding'];
 
             if (
                 $client->rental_value >= 1000 and
@@ -191,8 +200,22 @@ class ClientService
                 }
             }
 
-            DB::commit();
+            if(isset($result)){
+                [$score, $hasPendings, $hasProcesses] = $this->extractAnalisyFields($result);
+    
+                ClientAnalisy::create(                    
+                    [
+                        'user_id' => $client->user_id,
+                        'cpf' => $hascorresponding ? $client->corresponding->cpf : $client->cpf,
+                        'score' => (string) $score,
+                        'has_pendings' => $hasPendings,
+                        'has_processes' => $hasProcesses,
+                        'status' => ClientStatusEnum::from($client->status->value ?? $client->status),
+                    ]
+                );
+            }
 
+            DB::commit();
             return ['status' => true, 'data' => $client];
         } catch (Exception $error) {
             DB::rollBack();
@@ -241,6 +264,10 @@ class ClientService
                 throw new Exception($validator->errors(), 400);
             }
 
+            if ($this->hasRecentDisapproval($requestData['cpf'])) {
+                throw new Exception('CPF com reprovação em análise nos últimos 6 meses', 422);
+            }            
+
             $clientToUpdate = Client::find($user_id);
 
             if (! isset($clientToUpdate)) {
@@ -282,6 +309,8 @@ class ClientService
             }
 
             $oldStatus = $clientToUpdate->status;
+
+            $hascorresponding = $clientToUpdate['corresponding'];
 
             if (
                 ! $currentUser->isAdmin() &&
@@ -325,6 +354,21 @@ class ClientService
                             $subjetc
                         ));
                 }
+            }
+
+            if(isset($result)){
+                [$score, $hasPendings, $hasProcesses] = $this->extractAnalisyFields($result);
+
+                ClientAnalisy::create(
+                    [
+                        'user_id' => $clientToUpdate->user_id,
+                        'cpf' => $hascorresponding ? $clientToUpdate->corresponding->cpf : $clientToUpdate->cpf,
+                        'score' => (string) $score,
+                        'has_pendings' => $hasPendings,
+                        'has_processes' => $hasProcesses,
+                        'status' => ClientStatusEnum::from($clientToUpdate->status->value ?? $clientToUpdate->status),
+                    ]
+                );
             }
 
             DB::commit();
@@ -826,4 +870,19 @@ class ClientService
 
         $this->registerWebhook($documentUuid, route('webhook.d4sign'));
     }
+
+    private function extractAnalisyFields(array $response): array
+    {
+        $scores = collect($response[1]['dadosScoreRenda'] ?? []);
+        $p5 = $scores->first(fn ($s) => strtolower($s['nome_score'] ?? '') === 'p5');
+        $score = (int) ($p5['score'] ?? ($scores->first()['score'] ?? 0));
+
+        $hasProcesses = isset($response['LawProcesses']) && count($response['LawProcesses']) > 0;
+
+        $restricoes = collect($response[1]['restricoesDetalhe'] ?? []);
+        $hasPendings = $restricoes->isNotEmpty();
+
+        return [$score, $hasPendings, $hasProcesses];
+    }
+
 }
