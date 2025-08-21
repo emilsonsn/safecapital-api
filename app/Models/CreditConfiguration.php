@@ -23,6 +23,19 @@ class CreditConfiguration extends Model
         'has_law_processes',
         'has_pending_issues',
         'max_pending_value',
+        'process_categories',
         'status',
+    ];
+
+    protected $casts = [
+        'id' => 'integer',
+        'description' => 'string',
+        'start_score' => 'integer',
+        'end_score' => 'integer',
+        'has_law_processes' => 'boolean',
+        'has_pending_issues' => 'boolean',
+        'max_pending_value' => 'float',
+        'process_categories' => 'array',
+        'status' => 'string',
     ];
 }

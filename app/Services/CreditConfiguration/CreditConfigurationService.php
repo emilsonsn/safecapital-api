@@ -2,7 +2,9 @@
 
 namespace App\Services\CreditConfiguration;
 
+use App\Enums\ProcessesCategoryEnum;
 use App\Models\CreditConfiguration;
+use App\Rules\EnumRule;
 use Exception;
 use Illuminate\Support\Facades\Validator;
 
@@ -49,6 +51,8 @@ class CreditConfigurationService
                 'has_law_processes' => ['required', 'boolean'],
                 'max_pending_value' => ['nullable', 'numeric'],
                 'status' => ['required', 'in:Pending,Approved,Disapproved'],
+                'process_categories' => ['required', 'array', 'min:1'],
+                'process_categories.*' => [new EnumRule(ProcessesCategoryEnum::class)],
             ];     
 
             $requestData = $request->all();
@@ -78,6 +82,8 @@ class CreditConfigurationService
                 'has_pending_issues' => ['required', 'boolean'],
                 'max_pending_value' => ['nullable', 'numeric'],
                 'status' => ['required', 'in:Pending,Approved,Disapproved'],
+                'process_categories' => ['required', 'array', 'min:1'],
+                'process_categories.*' => [new EnumRule(ProcessesCategoryEnum::class)],
             ];     
 
             $requestData = $request->all();

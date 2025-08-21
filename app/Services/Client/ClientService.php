@@ -700,14 +700,15 @@ class ClientService
         $p5 = $scores->first(fn ($s) => strtolower($s['nome_score'] ?? '') === 'p5');
         $creditScore = (int) ($p5['score'] ?? ($scores->first()['score'] ?? 0));
 
-        $hasLawProcesses = isset($response['LawProcesses']) && count($response['LawProcesses']) > 0;
+        $lawSuits = collect($response['LawProcesses'] ?? []);
+        $hasLawProcesses = $lawSuits->isNotEmpty();
 
         $restricoes = collect($response[1]['restricoesDetalhe'] ?? []);
         $hasPendingIssues = $restricoes->isNotEmpty();
 
-        $maxPendingValue = $hasPendingIssues
-            ? (float) $restricoes['valor']
-            : 0;
+        $maxPendingValue = $hasPendingIssues ? (float) ($restricoes['valor'] ?? 0) : 0;
+
+        $processCategories = $this->extractProcessBroadSubjects($lawSuits);
 
         $statusOrder = [
             ClientStatusEnum::Approved,
@@ -716,24 +717,28 @@ class ClientService
 
         foreach ($statusOrder as $status) {
             $matched = collect($settings)->first(function ($setting) use (
-                $status, $creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue
+                $status, $creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue, $processCategories
             ) {
                 $scoreOk = $creditScore >= $setting['start_score'] && $creditScore <= $setting['end_score'];
-                $lawProcessOk = ! $hasLawProcesses || $setting['has_law_processes'];
                 $pendingOk = ! $hasPendingIssues || $setting['has_pending_issues'];
                 $pendingValueOk = ! $hasPendingIssues || $setting['max_pending_value'] === null || $maxPendingValue <= $setting['max_pending_value'];
 
-                return $setting['status'] === $status->value &&
-                    $scoreOk &&
-                    $lawProcessOk &&
-                    $pendingOk &&
-                    $pendingValueOk;
+                $allowsLaw = (bool) $setting['has_law_processes'];
+                $categoriesAllowed = collect($setting['process_categories'] ?? []);
+                $categoriesOk = ! $hasLawProcesses || ($allowsLaw && collect($processCategories)->every(fn ($c) => $categoriesAllowed->contains($c)));
+                $lawProcessOk = ! $hasLawProcesses || $allowsLaw;
+
+                return $setting['status'] === $status->value
+                    && $scoreOk
+                    && $lawProcessOk
+                    && $categoriesOk
+                    && $pendingOk
+                    && $pendingValueOk;
             });
 
             if ($matched) {
                 $client->status = $status;
                 $client->save();
-
                 return;
             }
         }
@@ -743,6 +748,17 @@ class ClientService
             $client->save();
         }
     }
+
+    private function extractProcessBroadSubjects($lawSuits): array
+    {
+        return collect($lawSuits)
+            ->pluck('InferredBroadCNJSubjectName')
+            ->filter(fn ($v) => is_string($v) && $v !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
 
     private function createPayment($client, $taxSetting)
     {
