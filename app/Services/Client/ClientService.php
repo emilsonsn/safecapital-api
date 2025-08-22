@@ -276,6 +276,8 @@ class ClientService
 
             DB::beginTransaction();
 
+            $changedCpf = ! ($clientToUpdate->cpf === $requestData['cpf']);
+
             $clientToUpdate->update($validator->validated());
 
             if ($request->filled('attachments')) {
@@ -314,9 +316,10 @@ class ClientService
 
             if (
                 ! $currentUser->isAdmin() &&
-                $clientToUpdate->rental_value >= 1000 and
-                $clientToUpdate->rental_value <= 9000 and
-                $clientToUpdate->sumValue() <= 12000
+                $clientToUpdate->rental_value >= 1000 &&
+                $clientToUpdate->rental_value <= 9000 &&
+                $clientToUpdate->sumValue() <= 12000 &&
+                $changedCpf
             ) {
                 $result = $this->searchCustomerCreditHistory($clientToUpdate);
 
