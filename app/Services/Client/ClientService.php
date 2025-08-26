@@ -108,7 +108,9 @@ class ClientService
                 'attachments' => ['nullable', 'array'],
             ];
 
-            $userId = Auth::user()->id;
+            $currentUser = Auth::user();
+
+            $userId = $currentUser->id;
 
             $requestData = $request->all();
 
@@ -161,8 +163,9 @@ class ClientService
             $hascorresponding = $client['corresponding'];
 
             if (
-                $client->rental_value >= 1000 and
-                $client->rental_value <= 9000 and
+                ! $currentUser->isAdmin() &&
+                $client->rental_value >= 1000 &&
+                $client->rental_value <= 9000 &&
                 $client->sumValue() <= 12000
             ) {
                 $result = $this->searchCustomerCreditHistory($client);
