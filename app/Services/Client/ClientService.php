@@ -265,8 +265,8 @@ class ClientService
             }
 
             if ($this->hasRecentDisapproval($requestData['cpf'])) {
-                throw new Exception('CPF com reprovação em análise nos últimos 6 meses', 422);
-            }            
+                throw new Exception('CPF com reprovação nos últimos 6 meses', 422);
+            }
 
             $clientToUpdate = Client::find($user_id);
 
@@ -704,14 +704,14 @@ class ClientService
         $creditScore = (int) ($p5['score'] ?? ($scores->first()['score'] ?? 0));
 
         $lawSuits = collect($response['LawProcesses'] ?? []);
-        $hasLawProcesses = $lawSuits->isNotEmpty();
 
         $restricoes = collect($response[1]['restricoesDetalhe'] ?? []);
         $hasPendingIssues = $restricoes->isNotEmpty();
-
         $maxPendingValue = $hasPendingIssues ? (float) ($restricoes['valor'] ?? 0) : 0;
 
-        $processCategories = $this->extractProcessBroadSubjects($lawSuits);
+        $targetCpf = $hascorresponding ? $client->corresponding->cpf : $client->cpf;
+        $judgedCategories = $this->extractProcessBroadSubjectsForCpf($lawSuits, $targetCpf);
+        $hasJudgedLawProcesses = !empty($judgedCategories);
 
         $statusOrder = [
             ClientStatusEnum::Approved,
@@ -720,7 +720,7 @@ class ClientService
 
         foreach ($statusOrder as $status) {
             $matched = collect($settings)->first(function ($setting) use (
-                $status, $creditScore, $hasLawProcesses, $hasPendingIssues, $maxPendingValue, $processCategories
+                $status, $creditScore, $hasPendingIssues, $maxPendingValue, $hasJudgedLawProcesses, $judgedCategories
             ) {
                 $scoreOk = $creditScore >= $setting['start_score'] && $creditScore <= $setting['end_score'];
                 $pendingOk = ! $hasPendingIssues || $setting['has_pending_issues'];
@@ -728,12 +728,10 @@ class ClientService
 
                 $allowsLaw = (bool) $setting['has_law_processes'];
                 $categoriesAllowed = collect($setting['process_categories'] ?? []);
-                $categoriesOk = ! $hasLawProcesses || ($allowsLaw && collect($processCategories)->every(fn ($c) => $categoriesAllowed->contains($c)));
-                $lawProcessOk = ! $hasLawProcesses || $allowsLaw;
+                $categoriesOk = ! $hasJudgedLawProcesses || ($allowsLaw && collect($judgedCategories)->every(fn ($c) => $categoriesAllowed->contains($c)));
 
                 return $setting['status'] === $status->value
                     && $scoreOk
-                    && $lawProcessOk
                     && $categoriesOk
                     && $pendingOk
                     && $pendingValueOk;
@@ -752,9 +750,10 @@ class ClientService
         }
     }
 
-    private function extractProcessBroadSubjects($lawSuits): array
+    private function extractProcessBroadSubjectsForCpf($lawSuits, string $cpf): array
     {
         return collect($lawSuits)
+            ->filter(fn ($p) => $this->isClientJudgedInProcess($p, $cpf))
             ->pluck('InferredBroadCNJSubjectName')
             ->filter(fn ($v) => is_string($v) && $v !== '')
             ->unique()
@@ -762,6 +761,18 @@ class ClientService
             ->all();
     }
 
+    private function isClientJudgedInProcess(array $process, string $cpf): bool
+    {
+        $cpf = preg_replace('/\D/', '', $cpf);
+        $typesJudged = ['DEFENDANT', 'REU', 'RÉU'];
+        return collect($process['Parties'] ?? [])
+            ->contains(function ($party) use ($cpf, $typesJudged) {
+                $doc = preg_replace('/\D/', '', (string) ($party['Doc'] ?? ''));
+                $polarity = strtoupper((string) ($party['Polarity'] ?? ''));
+                $type = strtoupper((string) ($party['Type'] ?? ''));
+                return $doc === $cpf && ($polarity === 'PASSIVE' || in_array($type, $typesJudged, true));
+            });
+    }
 
     private function createPayment($client, $taxSetting)
     {
