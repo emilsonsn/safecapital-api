@@ -122,7 +122,7 @@ class ClientService
                 throw new Exception($validator->errors(), 400);
             }
 
-            if ($this->hasRecentDisapproval($requestData['cpf'])) {
+            if (! $currentUser->isAdmin() && $this->hasRecentDisapproval($requestData['cpf'])) {
                 throw new Exception('CPF com reprovação em análise nos últimos 6 meses', 422);
             }
 
@@ -267,7 +267,7 @@ class ClientService
                 throw new Exception($validator->errors(), 400);
             }
 
-            if ($this->hasRecentDisapproval($requestData['cpf'])) {
+            if (! $currentUser->isAdmin() && $this->hasRecentDisapproval($requestData['cpf'])) {
                 throw new Exception('CPF com reprovação nos últimos 6 meses', 422);
             }
 
