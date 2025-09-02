@@ -112,8 +112,8 @@ class ClientService
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = $currentUser->isAdmin() && isset($request->user_id) ?
-                $request->user_id
+            $requestData['user_id'] = $currentUser->isAdmin() && isset($requestData['user_id']) ?
+                $requestData['user_id']
                 : $currentUser->id;
 
             $validator = Validator::make($requestData, $rules);
@@ -259,8 +259,8 @@ class ClientService
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = $currentUser->isAdmin() && isset($request->user_id) ?
-                $request->user_id
+            $requestData['user_id'] = $currentUser->isAdmin() && isset($requestData['user_id']) ?
+                $requestData['user_id']
                 : $currentUser->id;
 
             $validator = Validator::make($requestData, $rules);
