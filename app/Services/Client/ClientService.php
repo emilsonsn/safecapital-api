@@ -106,6 +106,7 @@ class ClientService
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
                 'attachments' => ['nullable', 'array'],
+                'user_id' => ['nullable', 'integer'],
             ];
 
             $currentUser = Auth::user();            
@@ -252,6 +253,7 @@ class ClientService
                 'complement' => ['nullable', 'string'],
                 'city' => ['required', 'string', 'max:255'],
                 'state' => ['required', 'string', 'max:255'],
+                'user_id' => ['nullable', 'integer'],
                 'attachments' => ['nullable', 'array'],
             ];
 
