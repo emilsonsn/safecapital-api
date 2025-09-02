@@ -108,13 +108,13 @@ class ClientService
                 'attachments' => ['nullable', 'array'],
             ];
 
-            $currentUser = Auth::user();
-
-            $userId = $currentUser->id;
+            $currentUser = Auth::user();            
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = $userId;
+            $requestData['user_id'] = $currentUser->isAdmin() && isset($request->user_id) ?
+                $request->user_id
+                : $currentUser->id;
 
             $validator = Validator::make($requestData, $rules);
 
@@ -259,7 +259,9 @@ class ClientService
 
             $requestData = $request->all();
 
-            $requestData['user_id'] = $currentUser->id;
+            $requestData['user_id'] = $currentUser->isAdmin() && isset($request->user_id) ?
+                $request->user_id
+                : $currentUser->id;
 
             $validator = Validator::make($requestData, $rules);
 
