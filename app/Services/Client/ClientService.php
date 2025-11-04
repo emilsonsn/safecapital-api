@@ -145,23 +145,21 @@ class ClientService
                 }
             }
 
+            $corresponding = null;
+
             if ($request->corresponding && isset($request->corresponding['cpf'])) {
                 $dataCorresponding = $request->corresponding;
                 $corresponding = Corresponding::updateOrCreate([
                     'id' => $dataCorresponding['cpf'] ?? '',
-                ], [
                     'client_id' => $client->id,
+                ], [
                     'cpf' => $dataCorresponding['cpf'],
                     'fullname' => $dataCorresponding['fullname'],
                     'birthday' => $dataCorresponding['birthday'],
                     'email' => $dataCorresponding['email'],
                     'phone' => $dataCorresponding['phone'],
                 ]);
-
-                $client['corresponding'] = $corresponding;
             }
-
-            $hascorresponding = $client['corresponding'];
 
             if (
                 ! $currentUser->isAdmin() &&
@@ -210,7 +208,7 @@ class ClientService
                 ClientAnalisy::create(                    
                     [
                         'user_id' => $client->user_id,
-                        'cpf' => $hascorresponding ? $client->corresponding->cpf : $client->cpf,
+                        'cpf' => $corresponding ? $client->corresponding->cpf : $client->cpf,
                         'score' => (string) $score,
                         'has_pendings' => $hasPendings,
                         'has_processes' => $hasProcesses,
@@ -220,6 +218,9 @@ class ClientService
             }
 
             DB::commit();
+
+            $client['corresponding'] = $corresponding;
+
             return ['status' => true, 'data' => $client];
         } catch (Exception $error) {
             DB::rollBack();
@@ -301,25 +302,23 @@ class ClientService
                 }
             }
 
+            $corresponding = null;
+
             if ($request->corresponding && isset($request->corresponding['cpf'])) {
                 $dataCorresponding = $request->corresponding;
                 $corresponding = Corresponding::updateOrCreate([
                     'id' => $dataCorresponding['cpf'] ?? '',
-                ], [
                     'client_id' => $clientToUpdate->id,
+                ], [
                     'cpf' => $dataCorresponding['cpf'],
                     'fullname' => $dataCorresponding['fullname'],
                     'birthday' => $dataCorresponding['birthday'],
                     'email' => $dataCorresponding['email'],
                     'phone' => $dataCorresponding['phone'],
                 ]);
-
-                $clientToUpdate['corresponding'] = $corresponding;
             }
 
             $oldStatus = $clientToUpdate->status;
-
-            $hascorresponding = $clientToUpdate['corresponding'];
 
             if (
                 ! $currentUser->isAdmin() &&
@@ -372,7 +371,7 @@ class ClientService
                 ClientAnalisy::create(
                     [
                         'user_id' => $clientToUpdate->user_id,
-                        'cpf' => $hascorresponding ? $clientToUpdate->corresponding->cpf : $clientToUpdate->cpf,
+                        'cpf' => $corresponding ? $clientToUpdate->corresponding->cpf : $clientToUpdate->cpf,
                         'score' => (string) $score,
                         'has_pendings' => $hasPendings,
                         'has_processes' => $hasProcesses,
@@ -382,6 +381,8 @@ class ClientService
             }
 
             DB::commit();
+
+            $clientToUpdate['corresponding'] = $corresponding;
 
             return ['status' => true, 'data' => $clientToUpdate];
         } catch (Exception $error) {
