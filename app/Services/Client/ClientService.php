@@ -545,16 +545,30 @@ class ClientService
 
             switch ($request->validation) {
                 case UserValidationEnum::Accepted->value:
+
+                    DB::beginTransaction();
+
                     $clientToUpdate->status = ClientStatusEnum::Active->value;
+                    $clientToUpdate->actived_at = Carbon::now();
                     $clientToUpdate->save();
+                
+                    $result = app(ClientInstallmentService::class)
+                        ->generateNextInstallment($clientToUpdate);
+
+                    if (! $result['status']) {
+                        throw new Exception($result['error'] ?? 'Erro ao gerar parcelas');
+                    }
+
+                    DB::commit();
+
                     Mail::to($user->email)
                         ->send(new AnalisyContractMail(
                             name: $user->name,
                             subject: 'Documentação aceita!',
                             textMessage: 'Sua documentação foi revisada e já foi aprovada!',
                             justification: $request->justification ?? ''
-                        )
-                        );
+                        ));
+
                     break;
                 case UserValidationEnum::Return->value:
                     $clientToUpdate->status = ClientStatusEnum::WaitingContract->value;

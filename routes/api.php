@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClientInstallmentController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\ClienteValidationMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -96,6 +97,12 @@ Route::middleware(['jwt'])->group(function(){
             Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
             Route::delete('{id}', [ClientController::class, 'delete']);        
         });
+
+        Route::prefix('client-installment')->group(function(){
+            Route::get('client/{clientId}', [ClientInstallmentController::class, 'listByClient']);
+            Route::post('{id}/upload-proof', [ClientInstallmentController::class, 'uploadProof']);            
+            Route::patch('{id}/mark-as-paid', [ClientInstallmentController::class, 'markAsPaid']);
+        });        
     });
 });
 
