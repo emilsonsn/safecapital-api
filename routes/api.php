@@ -13,6 +13,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -108,19 +110,55 @@ Route::middleware(['jwt'])->group(function(){
 });
 
 Route::get('/btg/callback', function (Request $request) {
-    Log::info('BTG OAuth Callback recebido', [
-        'query' => $request->query(),
-        'code' => $request->query('code'),
-        'state' => $request->query('state'),
-        'error' => $request->query('error'),
-        'error_description' => $request->query('error_description'),
-        'ip' => $request->ip(),
-        'user_agent' => $request->userAgent(),
+    if ($request->filled('error')) {
+        Log::error('Erro no callback OAuth BTG', [
+            'error' => $request->query('error'),
+            'error_description' => $request->query('error_description'),
+        ]);
+
+        return response()->json([
+            'message' => 'Erro retornado pelo BTG.',
+        ], 400);
+    }
+
+    $code = $request->query('code');
+
+    if (!$code) {
+        return response()->json([
+            'message' => 'Código de autorização não recebido.',
+        ], 400);
+    }
+
+    $response = Http::asForm()
+        ->withBasicAuth(config('services.btg.client_id'), config('services.btg.client_secret'))
+        ->post(config('services.btg.token_url'), [
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'redirect_uri' => config('services.btg.redirect_uri'),
+        ]);
+
+    if ($response->failed()) {
+        Log::error('Erro ao autenticar no BTG', [
+            'status' => $response->status(),
+            'body' => $response->json(),
+        ]);
+
+        return response()->json([
+            'message' => 'Erro ao autenticar no BTG.',
+        ], 400);
+    }
+
+    $data = $response->json();
+
+    Log::info('BTG OAuth autenticado', [
+        'access_token' => $data['access_token'] ?? null,
+        'refresh_token' => $data['refresh_token'] ?? null,
     ]);
 
     return response()->json([
-        'message' => 'Callback BTG recebido com sucesso. Verifique o log da aplicação.',
-        'code_received' => $request->has('code'),
+        'message' => 'Autenticação BTG realizada com sucesso.',
+        'access_token_received' => isset($data['access_token']),
+        'refresh_token_received' => isset($data['refresh_token']),
     ]);
 });
 

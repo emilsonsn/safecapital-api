@@ -31,4 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'btg' => [
+        'client_id' => env('BTG_CLIENT_ID'),
+        'client_secret' => env('BTG_CLIENT_SECRET'),
+        'token_url' => env('BTG_TOKEN_URL'),
+        'redirect_uri' => env('BTG_REDIRECT_URI'),
+    ],
+
 ];
