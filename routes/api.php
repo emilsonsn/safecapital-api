@@ -11,7 +11,8 @@ use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AdminMiddleware;
-
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 /*
 |--------------------------------------------------------------------------
 | API Routes
