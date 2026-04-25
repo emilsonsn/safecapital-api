@@ -99,6 +99,23 @@ Route::middleware(['jwt'])->group(function(){
     });
 });
 
+Route::get('/btg/callback', function (Request $request) {
+    Log::info('BTG OAuth Callback recebido', [
+        'query' => $request->query(),
+        'code' => $request->query('code'),
+        'state' => $request->query('state'),
+        'error' => $request->query('error'),
+        'error_description' => $request->query('error_description'),
+        'ip' => $request->ip(),
+        'user_agent' => $request->userAgent(),
+    ]);
+
+    return response()->json([
+        'message' => 'Callback BTG recebido com sucesso. Verifique o log da aplicação.',
+        'code_received' => $request->has('code'),
+    ]);
+});
+
 Route::prefix('webhook')->group(function () {
     Route::post('payment', [WebhookController::class, 'mercadopago']);
     Route::post('d4sign', [WebhookController::class, 'd4sign'])
