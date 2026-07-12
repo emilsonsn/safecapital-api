@@ -5,7 +5,7 @@ namespace App\Services\Client;
 use App\Enums\InstallmentStatusEnum;
 use App\Models\Client;
 use App\Models\ClientInstallment;
-use App\Traits\MercadoPagoTrait;
+use App\Traits\BtgTrait;
 use Carbon\Carbon;
 use DB;
 use Exception;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Mail;
 
 class ClientInstallmentService
 {
-    use MercadoPagoTrait;
+    use BtgTrait;
 
     public function listByClient($clientId)
     {
@@ -49,23 +49,17 @@ class ClientInstallmentService
                 ->first();
 
             if (! $lastInstallment) {
-
                 $referenceDate = $client->actived_at ?? $client->updated_at;
-
                 $dueDate = $this->calculateFirstDueDate($referenceDate);
-
                 $installmentNumber = 1;
-
             } else {
-
                 if ($lastInstallment->installment_number >= $totalInstallments) {
                     DB::rollBack();
                     return ['status' => true];
                 }
 
                 $cycleDay = $lastInstallment->due_date->day;
-
-                $nextMonth = $lastInstallment->due_date->copy()->addMonth();
+                $nextMonth = Carbon::parse($lastInstallment->due_date)->copy()->addMonth();
 
                 if ($cycleDay > $nextMonth->daysInMonth) {
                     $dueDate = $nextMonth->endOfMonth();
@@ -81,27 +75,18 @@ class ClientInstallmentService
                 2
             );
 
-            $this->prepareMercadoPago(
-                $client->email,
-                $amountPerInstallment
-            );
+            $this->prepareBtg($amountPerInstallment);            
 
             $externalReference = (string) Str::uuid();
 
-            $expiration = $dueDate
-                ->copy()
-                ->endOfDay()
-                ->setTimezone('America/Sao_Paulo')
-                ->format('Y-m-d\TH:i:s.000P');
-
-            $payment = $this->makeBoletoPayment(
+            $payment = $this->makeBtgBoletoPayment(
                 externalReference: $externalReference,
-                expirationDate: $expiration,
+                dueDate: $dueDate->format('Y-m-d'),
                 client: $client
             );
 
             if (isset($payment['error'])) {
-                throw new Exception('Erro ao gerar boleto da parcela ' . $installmentNumber);
+                throw new Exception('Erro ao gerar boleto BTG da parcela ' . $installmentNumber);
             }
 
             $installment = ClientInstallment::create([
@@ -109,25 +94,32 @@ class ClientInstallmentService
                 'installment_number' => $installmentNumber,
                 'amount' => $amountPerInstallment,
                 'due_date' => $dueDate,
-                'mercado_pago_id' => $payment['id'] ?? null,
-                'boleto_url' => $payment['transaction_details']['external_resource_url'] ?? null,
-                'boleto_barcode' => $payment['barcode']['content'] ?? null,
+                'provider_external_id' => $payment['bankSlipId'] ?? $externalReference,
+                'provider_correlation_id' => $payment['correlationId'] ?? $externalReference,
+                'digitable_line' => $payment['digitableLine'] ?? null,
+                'boleto_url' => null,
+                'boleto_barcode' => $payment['barCode'] ?? null,
                 'status' => InstallmentStatusEnum::Open,
-            ]);            
+                'meta' => [
+                    'btg_status' => $payment['status'] ?? null,
+                    'our_number' => $payment['ourNumber'] ?? null,
+                    'our_number_digit' => $payment['ourNumberDigit'] ?? null,
+                    'pix' => $payment['pixInfo'] ?? null,
+                ],
+            ]);
 
             DB::commit();
 
             Mail::to($client->email)
                 ->send(new InstallmentBoletoMail($installment));
-                
+
             $installment->update([
                 'boleto_sent_at' => now()
             ]);
-            
+
             return ['status' => true];
 
         } catch (Exception $e) {
-
             DB::rollBack();
 
             return [
@@ -136,7 +128,7 @@ class ClientInstallmentService
                 'statusCode' => 400
             ];
         }
-    }
+    }    
 
     private function calculateFirstDueDate(Carbon $activedAt): Carbon
     {

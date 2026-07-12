@@ -18,7 +18,10 @@ class ClientInstallment extends Model
         'paid_amount',
         'fine',
         'interest',
-        'mercado_pago_id',
+        'provider_external_id',
+        'provider_correlation_id',
+        'digitable_line',
+        'meta',
         'boleto_url',
         'boleto_barcode',
         'boleto_pdf_path',
@@ -37,6 +40,7 @@ class ClientInstallment extends Model
         'due_date' => 'date',
         'boleto_sent_at' => 'datetime',
         'paid_at' => 'datetime',
+        'meta' => 'array',
         'status' => InstallmentStatusEnum::class,
     ];
 
