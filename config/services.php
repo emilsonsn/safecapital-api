@@ -32,13 +32,23 @@ return [
     ],
 
     'btg' => [
+        'environment' => env('BTG_ENVIRONMENT', 'SANDBOX'),
         'client_id' => env('BTG_CLIENT_ID'),
         'client_secret' => env('BTG_CLIENT_SECRET'),
+        'authorize_url' => env('BTG_AUTHORIZE_URL', 'https://id.sandbox.btgpactual.com/oauth2/authorize'),
         'token_url' => env('BTG_TOKEN_URL'),
         'redirect_uri' => env('BTG_REDIRECT_URI'),
+        'frontend_callback_url' => env('BTG_FRONTEND_CALLBACK_URL', env('APP_URL')),
         'api_url' => env('BTG_API_URL'),
-        'refresh_token' => env('BTG_REFRESH_TOKEN'),
+        'company_id' => env('BTG_COMPANY_ID'),
         'account_id' => env('BTG_ACCOUNT_ID'),
+        'account_branch' => env('BTG_ACCOUNT_BRANCH'),
+        'account_number' => env('BTG_ACCOUNT_NUMBER'),
+        'agreement' => env('BTG_AGREEMENT'),
+        'scopes' => array_values(array_filter(explode(',', env(
+            'BTG_SCOPES',
+            'openid,brn:btg:empresas:banking:collections'
+        )))),
     ],
 
 ];

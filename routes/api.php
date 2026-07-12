@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\ClientInstallmentController;
 use App\Http\Controllers\WebhookController;
-use App\Http\Middleware\ClienteValidationMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
@@ -11,10 +10,8 @@ use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\BtgIntegrationController;
 use App\Http\Middleware\AdminMiddleware;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +42,13 @@ Route::middleware('jwt')->prefix('user')->group(function(){
 });
 
 Route::middleware(['jwt'])->group(function(){
+
+    Route::middleware(AdminMiddleware::class)->prefix('admin/integrations/btg')->group(function () {
+        Route::get('/', [BtgIntegrationController::class, 'show']);
+        Route::post('connect', [BtgIntegrationController::class, 'connect']);
+        Route::post('refresh', [BtgIntegrationController::class, 'refresh']);
+        Route::delete('/', [BtgIntegrationController::class, 'disconnect']);
+    });
 
     Route::prefix('user')->group(function(){        
         Route::get('me', [UserController::class, 'getUser']);
@@ -112,55 +116,8 @@ Route::middleware(['jwt'])->group(function(){
     });
 });
 
-Route::get('/btg/callback', function (Request $request) {
-    if ($request->filled('error')) {
-        Log::error('Erro no callback OAuth BTG', [
-            'error' => $request->query('error'),
-            'error_description' => $request->query('error_description'),
-        ]);
-
-        return response()->json([
-            'message' => 'Erro retornado pelo BTG.',
-        ], 400);
-    }
-
-    $code = $request->query('code');
-
-    if (!$code) {
-        return response()->json([
-            'message' => 'Código de autorização não recebido.',
-        ], 400);
-    }
-
-    $response = Http::asForm()
-        ->withBasicAuth(config('services.btg.client_id'), config('services.btg.client_secret'))
-        ->post(config('services.btg.token_url'), [
-            'grant_type' => 'authorization_code',
-            'code' => $code,
-            'redirect_uri' => config('services.btg.redirect_uri'),
-        ]);
-
-    if ($response->failed()) {
-        Log::error('Erro ao autenticar no BTG', [
-            'status' => $response->status(),
-            'body' => $response->json(),
-        ]);
-
-        return response()->json([
-            'message' => 'Erro ao autenticar no BTG.',
-        ], 400);
-    }
-
-    $data = $response->json();
-
-    Log::info('BTG OAuth autenticado com sucesso.');
-
-    return response()->json([
-        'message' => 'Autenticação BTG realizada com sucesso.',
-        'access_token_received' => isset($data['access_token']),
-        'refresh_token_received' => isset($data['refresh_token']),
-    ]);
-});
+Route::get('/btg/callback', [BtgIntegrationController::class, 'callback'])
+    ->middleware('throttle:20,1');
 
 Route::prefix('webhook')->group(function () {
     Route::post('payment', [WebhookController::class, 'mercadopago']);
