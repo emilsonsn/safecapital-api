@@ -11,6 +11,8 @@ use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\BtgIntegrationController;
+use App\Http\Controllers\AdminInvoiceController;
+use App\Http\Controllers\AdminCashflowController;
 use App\Http\Middleware\AdminMiddleware;
 
 /*
@@ -48,6 +50,30 @@ Route::middleware(['jwt'])->group(function(){
         Route::post('connect', [BtgIntegrationController::class, 'connect']);
         Route::post('refresh', [BtgIntegrationController::class, 'refresh']);
         Route::delete('/', [BtgIntegrationController::class, 'disconnect']);
+    });
+
+    Route::middleware(AdminMiddleware::class)->prefix('admin/finance')->group(function () {
+        Route::get('clients', [AdminInvoiceController::class, 'clients']);
+        Route::get('clients/{user}/invoices', [AdminInvoiceController::class, 'invoices']);
+        Route::patch('clients/{user}/invoices/{invoice}/mark-as-paid', [AdminInvoiceController::class, 'markAsPaid']);
+
+        Route::get('suppliers', [AdminCashflowController::class, 'suppliers']);
+        Route::post('suppliers', [AdminCashflowController::class, 'storeSupplier']);
+        Route::patch('suppliers/{supplier}', [AdminCashflowController::class, 'updateSupplier']);
+
+        Route::get('expenses', [AdminCashflowController::class, 'expenses']);
+        Route::post('expenses', [AdminCashflowController::class, 'storeExpense']);
+        Route::patch('expenses/{expense}', [AdminCashflowController::class, 'updateExpense']);
+        Route::patch('expenses/{expense}/mark-as-paid', [AdminCashflowController::class, 'markExpenseAsPaid']);
+
+        Route::get('recoverables', [AdminCashflowController::class, 'recoverables']);
+        Route::post('recoverables', [AdminCashflowController::class, 'storeRecoverable']);
+        Route::patch('recoverables/{recoverable}', [AdminCashflowController::class, 'updateRecoverable']);
+        Route::patch('recoverables/{recoverable}/mark-as-received', [AdminCashflowController::class, 'markRecoverableAsReceived']);
+        Route::patch('recoverables/{recoverable}/mark-as-lost', [AdminCashflowController::class, 'markRecoverableAsLost']);
+
+        Route::get('reports/monthly', [AdminCashflowController::class, 'monthlyReport']);
+        Route::get('reports/monthly/history', [AdminCashflowController::class, 'monthlyReports']);
     });
 
     Route::prefix('user')->group(function(){        

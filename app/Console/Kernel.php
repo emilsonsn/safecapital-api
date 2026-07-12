@@ -24,6 +24,9 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('btg:refresh-token')
             ->dailyAt('03:00')->withoutOverlapping()->onOneServer();
+
+        $schedule->command('finance:generate-monthly-report')
+            ->monthlyOn(1, '00:15')->withoutOverlapping()->onOneServer();
     }
 
     /**
