@@ -53,6 +53,11 @@ class ClientInstallment extends Model
         return $this->belongsTo(Client::class);
     }
 
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_items')->withPivot('amount');
+    }
+
     public function getInstallmentUploadedUrlAttribute()
     {
         return $this->attributes['boleto_uploaded_path']

@@ -17,6 +17,11 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer()
             ->timeout(600);
+
+        $schedule->command('finance:close-invoices')
+            ->monthlyOn(5, '00:05')->withoutOverlapping()->onOneServer();
+        $schedule->command('finance:close-invoices')
+            ->monthlyOn(20, '00:05')->withoutOverlapping()->onOneServer();
     }
 
     /**

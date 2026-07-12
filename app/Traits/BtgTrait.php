@@ -6,6 +6,7 @@ use App\Models\Client as ClientModel;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 trait BtgTrait
 {
@@ -14,21 +15,27 @@ trait BtgTrait
     private string $btgTokenUrl;
     private string $btgClientId;
     private string $btgClientSecret;
-    private string $btgRefreshToken;
-    private string $btgAccessToken;
-    private string $btgAccountId;
+    private ?string $btgRefreshToken = null;
+    private ?string $btgAccessToken = null;
+    private ?string $btgAccountId = null;
 
     public function prepareBtg(float $value): void
     {
         $this->value = $value;
-        $this->btgApiUrl = env('BTG_API_URL');
-        $this->btgTokenUrl = env('BTG_TOKEN_URL');
-        $this->btgClientId = env('BTG_CLIENT_ID');
-        $this->btgClientSecret = env('BTG_CLIENT_SECRET');
-        $this->btgRefreshToken = env('BTG_REFRESH_TOKEN');
+        $this->btgApiUrl = config('services.btg.api_url');
+        $this->btgTokenUrl = config('services.btg.token_url');
+        $this->btgClientId = config('services.btg.client_id');
+        $this->btgClientSecret = config('services.btg.client_secret');
+        $this->btgRefreshToken = config('services.btg.refresh_token');
 
         $this->authenticateBtgWithRefreshToken();
         $this->getBtgAccountId();        
+    }
+
+    public function makeBtgInvoiceBoleto(string $externalReference, string $dueDate, User $user): array
+    {
+        return $this->sendBtgBoleto($externalReference, $dueDate, trim($user->name.' '.$user->surname),
+            preg_replace('/\D/', '', (string) $user->cnpj), $user->email, 'Fatura mensal de garantias');
     }
 
     private function authenticateBtgWithRefreshToken(): void
@@ -66,7 +73,7 @@ trait BtgTrait
                 cache()->put(
                     'btg_access_token',
                     $this->btgAccessToken,
-                    now()->addHour()
+                    now()->addSeconds(max(60, ((int) ($data['expires_in'] ?? 3600)) - 60))
                 );
             }
 
@@ -84,6 +91,11 @@ trait BtgTrait
 
     private function getBtgAccountId(): void
     {
+        $configuredAccountId = config('services.btg.account_id');
+        if (! empty($configuredAccountId)) {
+            $this->btgAccountId = $configuredAccountId;
+            return;
+        }
         $cachedAccountId = cache()->get('btg_account_id');
 
         if (! empty($cachedAccountId)) {
@@ -140,6 +152,14 @@ trait BtgTrait
         string $dueDate,
         ClientModel $client
     ): array {
+        return $this->sendBtgBoleto($externalReference, $dueDate,
+            trim($client->name.' '.$client->surname), preg_replace('/\D/', '', $client->cpf),
+            $client->email, 'Parcela do seguro');
+    }
+
+    private function sendBtgBoleto(string $externalReference, string $dueDate, string $payerName,
+        string $taxId, string $email, string $description): array
+    {
         $accessToken = $this->btgAccessToken ?? null;
 
         if (! $accessToken) {
@@ -168,11 +188,11 @@ trait BtgTrait
                     'amount' => $this->value,
                     'dueDate' => $dueDate,
                     'referenceNumber' => substr((string) $externalReference, 0, 20),
-                    'description' => 'Parcela do seguro',
+                    'description' => $description,
                     'payer' => [
-                        'name' => trim($client->name . ' ' . $client->surname),
-                        'taxId' => preg_replace('/\D/', '', $client->cpf),
-                        'email' => $client->email,
+                        'name' => $payerName,
+                        'taxId' => $taxId,
+                        'email' => $email,
                     ],
                     'installments' => 1,
                 ],

@@ -552,13 +552,6 @@ class ClientService
                     $clientToUpdate->actived_at = Carbon::now();
                     $clientToUpdate->save();
                 
-                    $result = app(ClientInstallmentService::class)
-                        ->generateNextInstallment($clientToUpdate);
-
-                    if (! $result['status']) {
-                        throw new Exception($result['error'] ?? 'Erro ao gerar parcelas');
-                    }
-
                     DB::commit();
 
                     Mail::to($user->email)

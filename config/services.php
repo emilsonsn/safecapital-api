@@ -36,6 +36,9 @@ return [
         'client_secret' => env('BTG_CLIENT_SECRET'),
         'token_url' => env('BTG_TOKEN_URL'),
         'redirect_uri' => env('BTG_REDIRECT_URI'),
+        'api_url' => env('BTG_API_URL'),
+        'refresh_token' => env('BTG_REFRESH_TOKEN'),
+        'account_id' => env('BTG_ACCOUNT_ID'),
     ],
 
 ];

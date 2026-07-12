@@ -44,6 +44,7 @@ class Client extends Model
         'city' => 'string',
         'state' => 'string',
         'status' => ClientStatusEnum::class,        
+        'actived_at' => 'datetime',
     ];
 
     protected $fillable = [

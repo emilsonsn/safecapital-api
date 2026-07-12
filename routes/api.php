@@ -10,6 +10,7 @@ use App\Http\Controllers\CreditConfigurationController;
 use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -106,6 +107,8 @@ Route::middleware(['jwt'])->group(function(){
             Route::post('{id}/upload-proof', [ClientInstallmentController::class, 'uploadProof']);            
             Route::patch('{id}/mark-as-paid', [ClientInstallmentController::class, 'markAsPaid']);
         });        
+
+        Route::get('finance/invoices', [InvoiceController::class, 'index']);
     });
 });
 
@@ -150,10 +153,7 @@ Route::get('/btg/callback', function (Request $request) {
 
     $data = $response->json();
 
-    Log::info('BTG OAuth autenticado', [
-        'access_token' => $data['access_token'] ?? null,
-        'refresh_token' => $data['refresh_token'] ?? null,
-    ]);
+    Log::info('BTG OAuth autenticado com sucesso.');
 
     return response()->json([
         'message' => 'Autenticação BTG realizada com sucesso.',
