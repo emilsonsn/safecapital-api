@@ -8,6 +8,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientInstallmentController;
 use App\Http\Controllers\CreditConfigurationController;
 use App\Http\Controllers\FinancialDashboardController;
+use App\Http\Controllers\FinancialReportExportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
@@ -76,6 +77,7 @@ Route::middleware(['jwt'])->group(function () {
 
         Route::get('reports/monthly', [AdminCashflowController::class, 'monthlyReport']);
         Route::get('reports/monthly/history', [AdminCashflowController::class, 'monthlyReports']);
+        Route::get('reports/monthly/export', [FinancialReportExportController::class, 'monthly']);
         Route::get('dashboard', [FinancialDashboardController::class, 'index']);
     });
 

@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\User;
 use App\Services\Finance\CashflowService;
 use App\Services\Finance\FinancialDashboardService;
+use App\Services\Finance\FinancialReportExportService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -145,5 +146,13 @@ class CashflowServiceTest extends TestCase
         $this->assertSame(300.0, $dashboard['summary']['total_expenses']);
         $this->assertSame(400.0, $dashboard['recoverables']['pending']['amount']);
         $this->assertCount(3, $dashboard['chart']);
+
+        $exporter = app(FinancialReportExportService::class);
+        $pdf = $exporter->export($month, 'pdf');
+        $docx = $exporter->export($month, 'docx');
+        $this->assertSame('application/pdf', $pdf['content_type']);
+        $this->assertStringStartsWith('%PDF', $pdf['content']);
+        $this->assertSame('application/vnd.openxmlformats-officedocument.wordprocessingml.document', $docx['content_type']);
+        $this->assertStringStartsWith('PK', $docx['content']);
     }
 }
