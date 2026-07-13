@@ -218,7 +218,7 @@ class InvoiceService
         }, 3);
     }
 
-    private function syncOverdueInvoices(): void
+    public function syncOverdueInvoices(): void
     {
         Invoice::query()
             ->where('status', InvoiceStatusEnum::Open->value)

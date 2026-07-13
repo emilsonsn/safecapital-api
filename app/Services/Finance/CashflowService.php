@@ -210,9 +210,7 @@ class CashflowService
             ->sum('amount');
         $totalIncome = $invoiceIncome + $recoveriesIncome;
 
-        return MonthlyFinancialReport::updateOrCreate([
-            'reference_month' => $start->toDateString(),
-        ], [
+        $data = [
             'invoice_income' => $invoiceIncome,
             'recoveries_income' => $recoveriesIncome,
             'total_income' => $totalIncome,
@@ -220,6 +218,20 @@ class CashflowService
             'net_balance' => $totalIncome - $totalExpenses,
             'recoverable_balance' => $recoverableBalance,
             'generated_at' => now(),
+        ];
+        $report = MonthlyFinancialReport::query()
+            ->whereDate('reference_month', $start)
+            ->first();
+
+        if ($report) {
+            $report->update($data);
+
+            return $report->fresh();
+        }
+
+        return MonthlyFinancialReport::create([
+            ...$data,
+            'reference_month' => $start->toDateString(),
         ]);
     }
 

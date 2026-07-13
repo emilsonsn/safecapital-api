@@ -8,6 +8,7 @@ use App\Enums\RecoverableStatusEnum;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Services\Finance\CashflowService;
+use App\Services\Finance\FinancialDashboardService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -26,6 +27,7 @@ class CashflowServiceTest extends TestCase
             $table->string('name');
             $table->string('surname');
             $table->string('email');
+            $table->string('company_name')->nullable();
             $table->string('password');
             $table->string('role');
             $table->softDeletes();
@@ -137,5 +139,11 @@ class CashflowServiceTest extends TestCase
         $this->assertSame(ExpenseStatusEnum::Paid, $expense->fresh()->status);
         $this->assertSame(RecoverableStatusEnum::Pending, $pending->fresh()->status);
         $this->assertSame(RecoverableStatusEnum::Recovered, $received->fresh()->status);
+
+        $dashboard = app(FinancialDashboardService::class)->dashboard($month, 3, 15);
+        $this->assertSame(1200.0, $dashboard['summary']['total_income']);
+        $this->assertSame(300.0, $dashboard['summary']['total_expenses']);
+        $this->assertSame(400.0, $dashboard['recoverables']['pending']['amount']);
+        $this->assertCount(3, $dashboard['chart']);
     }
 }
