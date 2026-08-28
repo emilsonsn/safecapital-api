@@ -12,6 +12,7 @@ use App\Http\Controllers\FinancialReportExportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
+use App\Http\Controllers\TermDocumentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\AdminMiddleware;
@@ -80,6 +81,10 @@ Route::middleware(['jwt'])->group(function () {
         Route::get('reports/monthly/export', [FinancialReportExportController::class, 'monthly']);
         Route::get('dashboard', [FinancialDashboardController::class, 'index']);
     });
+
+    Route::get('term/current', [TermDocumentController::class, 'current']);
+    Route::post('term', [TermDocumentController::class, 'store'])
+        ->middleware('adminOrManager');
 
     Route::prefix('user')->group(function () {
         Route::get('me', [UserController::class, 'getUser']);
