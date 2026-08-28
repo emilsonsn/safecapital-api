@@ -16,6 +16,7 @@ class User extends Authenticatable implements JWTSubject
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
 
     public $table = 'users';
@@ -74,12 +75,13 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
-    public function attachments(){
+    public function attachments()
+    {
         return $this->hasMany(UserAttachment::class);
     }
 
-    public function terms() {
-        return $this->hasOne(AcceptanceTerm::class);
+    public function terms()
+    {
+        return $this->hasOne(AcceptanceTerm::class)->latestOfMany();
     }
-
 }
