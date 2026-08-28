@@ -5,6 +5,7 @@ namespace App\Http;
 use App\Http\Middleware\ClienteAcceptTermsMiddleware;
 use App\Http\Middleware\ClientValidationMiddleware;
 use App\Http\Middleware\AdminOrManagerMiddleware;
+use App\Http\Middleware\FinancialMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -16,16 +17,15 @@ class Kernel extends HttpKernel
      *
      * @var array<int, class-string|string>
      */
-
-     protected $routeMiddleware = [
+    protected $routeMiddleware = [
         'jwt' => \Tymon\JWTAuth\Http\Middleware\Authenticate::class,
         'user' => \App\Http\Middleware\UserMiddleware::class,
         'clientValidation' => ClientValidationMiddleware::class,
         'clienteAcceptTerms' => ClienteAcceptTermsMiddleware::class,
         'adminOrManager' => AdminOrManagerMiddleware::class,
+        'financial' => FinancialMiddleware::class,
     ];
 
-    
     protected $middleware = [
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
@@ -55,7 +55,7 @@ class Kernel extends HttpKernel
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-    ],
+        ],
     ];
 
     /**

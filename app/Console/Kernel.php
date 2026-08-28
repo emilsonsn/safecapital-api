@@ -15,8 +15,18 @@ class Kernel extends ConsoleKernel
         $schedule->command("app:verify-payment")
             ->everyFifteenMinutes()
             ->withoutOverlapping()
-            ->onOneServer()
-            ->timeout(600);
+            ->onOneServer();
+
+        $schedule->command('finance:close-invoices')
+            ->monthlyOn(5, '00:05')->withoutOverlapping()->onOneServer();
+        $schedule->command('finance:close-invoices')
+            ->monthlyOn(20, '00:05')->withoutOverlapping()->onOneServer();
+
+        $schedule->command('btg:refresh-token')
+            ->dailyAt('03:00')->withoutOverlapping()->onOneServer();
+
+        $schedule->command('finance:generate-monthly-report')
+            ->monthlyOn(1, '00:15')->withoutOverlapping()->onOneServer();
     }
 
     /**
