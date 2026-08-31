@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ClientStatusEnum;
+use App\Enums\PaymentFormEnum;
 use App\Enums\PropertyTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -38,11 +39,12 @@ class Client extends Model
         'policy_value' => 'float',
         'neighborhood' => 'string',
         'observations' => 'string',
-        'payment_form' => 'string',
+        'payment_form' => PaymentFormEnum::class,
         'complement' => 'string',
         'city' => 'string',
         'state' => 'string',
-        'status' => ClientStatusEnum::class
+        'status' => ClientStatusEnum::class,        
+        'actived_at' => 'datetime',
     ];
 
     protected $fillable = [
@@ -70,6 +72,7 @@ class Client extends Model
         'state',
         'status',
         'user_id',
+        'actived_at'
     ];
 
     public function user(): BelongsTo{
@@ -90,6 +93,10 @@ class Client extends Model
 
     public function corresponding(): HasOne{
         return $this->hasOne(related: Corresponding::class);
+    }
+
+    public function installments(): HasMany{
+        return $this->hasMany(related: ClientInstallment::class);
     }
 
     public function sumValue(): float

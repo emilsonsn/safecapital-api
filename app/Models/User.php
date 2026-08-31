@@ -84,4 +84,8 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(AcceptanceTerm::class)->latestOfMany();
     }
+    public function clients() { return $this->hasMany(Client::class); }
+
+    public function invoices() { return $this->hasMany(Invoice::class); }
+
 }

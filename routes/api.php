@@ -1,14 +1,23 @@
 <?php
 
+use App\Http\Controllers\AdminCashflowController;
+use App\Http\Controllers\AdminInvoiceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BtgIntegrationController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientInstallmentController;
 use App\Http\Controllers\CreditConfigurationController;
+use App\Http\Controllers\FinancialDashboardController;
+use App\Http\Controllers\FinancialReportExportController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PolicyTemplateController;
 use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\TermDocumentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\FinancialMiddleware;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +49,39 @@ Route::middleware('jwt')->prefix('user')->group(function () {
 });
 
 Route::middleware(['jwt'])->group(function () {
+
+    Route::middleware(AdminMiddleware::class)->prefix('admin/integrations/btg')->group(function () {
+        Route::get('/', [BtgIntegrationController::class, 'show']);
+        Route::post('connect', [BtgIntegrationController::class, 'connect']);
+        Route::post('refresh', [BtgIntegrationController::class, 'refresh']);
+        Route::delete('/', [BtgIntegrationController::class, 'disconnect']);
+    });
+
+    Route::middleware(FinancialMiddleware::class)->prefix('admin/finance')->group(function () {
+        Route::get('clients', [AdminInvoiceController::class, 'clients']);
+        Route::get('clients/{user}/invoices', [AdminInvoiceController::class, 'invoices']);
+        Route::patch('clients/{user}/invoices/{invoice}/mark-as-paid', [AdminInvoiceController::class, 'markAsPaid']);
+
+        Route::get('suppliers', [AdminCashflowController::class, 'suppliers']);
+        Route::post('suppliers', [AdminCashflowController::class, 'storeSupplier']);
+        Route::patch('suppliers/{supplier}', [AdminCashflowController::class, 'updateSupplier']);
+
+        Route::get('expenses', [AdminCashflowController::class, 'expenses']);
+        Route::post('expenses', [AdminCashflowController::class, 'storeExpense']);
+        Route::patch('expenses/{expense}', [AdminCashflowController::class, 'updateExpense']);
+        Route::patch('expenses/{expense}/mark-as-paid', [AdminCashflowController::class, 'markExpenseAsPaid']);
+
+        Route::get('recoverables', [AdminCashflowController::class, 'recoverables']);
+        Route::post('recoverables', [AdminCashflowController::class, 'storeRecoverable']);
+        Route::patch('recoverables/{recoverable}', [AdminCashflowController::class, 'updateRecoverable']);
+        Route::patch('recoverables/{recoverable}/mark-as-received', [AdminCashflowController::class, 'markRecoverableAsReceived']);
+        Route::patch('recoverables/{recoverable}/mark-as-lost', [AdminCashflowController::class, 'markRecoverableAsLost']);
+
+        Route::get('reports/monthly', [AdminCashflowController::class, 'monthlyReport']);
+        Route::get('reports/monthly/history', [AdminCashflowController::class, 'monthlyReports']);
+        Route::get('reports/monthly/export', [FinancialReportExportController::class, 'monthly']);
+        Route::get('dashboard', [FinancialDashboardController::class, 'index']);
+    });
 
     Route::get('term/current', [TermDocumentController::class, 'current']);
     Route::post('term', [TermDocumentController::class, 'store'])
@@ -106,25 +148,19 @@ Route::middleware(['jwt'])->group(function () {
             Route::delete('attachment/{id}', [ClientController::class, 'deleteAttachment']);
             Route::delete('{id}', [ClientController::class, 'delete']);
         });
+
+        Route::prefix('client-installment')->group(function () {
+            Route::get('client/{clientId}', [ClientInstallmentController::class, 'listByClient']);
+            Route::post('{id}/upload-proof', [ClientInstallmentController::class, 'uploadProof']);
+            Route::patch('{id}/mark-as-paid', [ClientInstallmentController::class, 'markAsPaid']);
+        });
+
+        Route::get('finance/invoices', [InvoiceController::class, 'index']);
     });
 });
 
-Route::get('/btg/callback', function (Request $request) {
-    Log::info('BTG OAuth Callback recebido', [
-        'query' => $request->query(),
-        'code' => $request->query('code'),
-        'state' => $request->query('state'),
-        'error' => $request->query('error'),
-        'error_description' => $request->query('error_description'),
-        'ip' => $request->ip(),
-        'user_agent' => $request->userAgent(),
-    ]);
-
-    return response()->json([
-        'message' => 'Callback BTG recebido com sucesso. Verifique o log da aplicação.',
-        'code_received' => $request->has('code'),
-    ]);
-});
+Route::get('/btg/callback', [BtgIntegrationController::class, 'callback'])
+    ->middleware('throttle:20,1');
 
 Route::prefix('webhook')->group(function () {
     Route::post('payment', [WebhookController::class, 'mercadopago']);
