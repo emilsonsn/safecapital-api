@@ -16,6 +16,7 @@ use App\Models\ClientPayment;
 use App\Models\ClientPh3Analisy;
 use App\Models\Corresponding;
 use App\Models\PolicyDocument;
+use App\Services\PolicyTemplate\PolicyTemplateService;
 use App\Traits\ApiaryTrait;
 use App\Traits\BlocksCpfByRecentDisapproval;
 use App\Traits\Doc4SignTrait;
@@ -40,6 +41,8 @@ class ClientService
     use MercadoPagoTrait;
     use PH3Trait;
     use BlocksCpfByRecentDisapproval;
+
+    public function __construct(private readonly PolicyTemplateService $policyTemplateService) {}
 
     public function search($request)
     {
@@ -848,7 +851,7 @@ class ClientService
     {
         $this->prepareDoc4Sign();
 
-        $templatePath = storage_path('app/templates/policy_template.docx');
+        $templatePath = $this->policyTemplateService->currentPath();
         $fileName = 'policy_'.Str::uuid().'.docx';
         $filledPath = storage_path('app/policies/'.$fileName);
 

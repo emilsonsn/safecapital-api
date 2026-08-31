@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CreditConfigurationController;
+use App\Http\Controllers\PolicyTemplateController;
 use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\TermDocumentController;
@@ -43,6 +44,12 @@ Route::middleware(['jwt'])->group(function () {
     Route::get('term/current', [TermDocumentController::class, 'current']);
     Route::post('term', [TermDocumentController::class, 'store'])
         ->middleware('adminOrManager');
+
+    Route::middleware('adminOrManager')->prefix('policy-template')->group(function () {
+        Route::get('current', [PolicyTemplateController::class, 'current']);
+        Route::get('current/download', [PolicyTemplateController::class, 'download']);
+        Route::post('/', [PolicyTemplateController::class, 'store']);
+    });
 
     Route::prefix('user')->group(function () {
         Route::get('me', [UserController::class, 'getUser']);
