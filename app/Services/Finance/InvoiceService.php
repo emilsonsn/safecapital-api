@@ -5,8 +5,8 @@ namespace App\Services\Finance;
 use App\Enums\ClientStatusEnum;
 use App\Enums\InstallmentStatusEnum;
 use App\Enums\InvoiceStatusEnum;
-use App\Enums\PaymentFormEnum;
 use App\Enums\UserRoleEnum;
+use App\Mail\InvoiceBoletoMail;
 use App\Models\Client;
 use App\Models\ClientInstallment;
 use App\Models\Invoice;
@@ -14,7 +14,10 @@ use App\Models\User;
 use App\Traits\BtgTrait;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -37,7 +40,6 @@ class InvoiceService
         $created = 0;
         User::query()->whereHas('clients', function ($query) use ($closingDate) {
             $query->where('status', ClientStatusEnum::Active->value)
-                ->where('payment_form', PaymentFormEnum::Invoiced->value)
                 ->whereDate('actived_at', '<=', $closingDate);
         })->chunkById(100, function ($users) use ($closingDate, $dueDate, &$created) {
             foreach ($users as $user) {
@@ -50,7 +52,7 @@ class InvoiceService
 
     private function closeForUser(User $user, Carbon $closingDate, Carbon $dueDate): ?Invoice
     {
-        return DB::transaction(function () use ($user, $closingDate, $dueDate) {
+        $invoice = DB::transaction(function () use ($user, $closingDate, $dueDate) {
             if (Invoice::where('user_id', $user->id)->whereDate('closing_date', $closingDate)->exists()) {
                 return null;
             }
@@ -58,24 +60,24 @@ class InvoiceService
             $installments = collect();
             $clients = Client::query()->where('user_id', $user->id)
                 ->where('status', ClientStatusEnum::Active->value)
-                ->where('payment_form', PaymentFormEnum::Invoiced->value)
                 ->whereDate('actived_at', '<=', $closingDate)->lockForUpdate()->get();
 
             foreach ($clients as $client) {
                 $activationDay = Carbon::parse($client->actived_at)->day;
-                $clientClosingDay = ($activationDay <= 5 || $activationDay > 20) ? 5 : 20;
+                $clientClosingDay = ($activationDay < 5 || $activationDay > 20) ? 5 : 20;
                 if ($clientClosingDay !== $closingDate->day) {
                     continue;
                 }
 
+                $totalInstallments = $client->payment_form->installments();
                 $number = $client->installments()->count() + 1;
-                if ($number > 12) {
+                if ($number > $totalInstallments) {
                     continue;
                 }
 
-                $amount = $number === 12
-                    ? round($client->policy_value - round($client->policy_value / 12, 2) * 11, 2)
-                    : round($client->policy_value / 12, 2);
+                $amount = $number === $totalInstallments
+                    ? round($client->policy_value - round($client->policy_value / $totalInstallments, 2) * ($totalInstallments - 1), 2)
+                    : round($client->policy_value / $totalInstallments, 2);
 
                 $installments->push(ClientInstallment::create([
                     'client_id' => $client->id, 'installment_number' => $number,
@@ -111,13 +113,34 @@ class InvoiceService
 
             return $invoice;
         }, 3);
+
+        if ($invoice) {
+            $this->sendInvoiceMail($user, $invoice->load('installments.client'));
+        }
+
+        return $invoice;
     }
 
-    public function listForUser(User $user)
+    private function sendInvoiceMail(User $user, Invoice $invoice): void
+    {
+        if (! $user->email) {
+            return;
+        }
+
+        Mail::to($user->email)->send(new InvoiceBoletoMail($user, $invoice));
+    }
+
+    public function listForUser(User $user, array $filters = []): LengthAwarePaginator
     {
         $this->syncOverdueInvoices();
 
-        return $user->invoices()->with('installments.client')->latest('due_date')->paginate(15);
+        $perPage = min(max((int) ($filters['per_page'] ?? 15), 1), 100);
+
+        return $user->invoices()
+            ->with('installments.client')
+            ->when(! empty($filters['year']), fn ($query) => $query->whereYear('closing_date', $filters['year']))
+            ->latest('due_date')
+            ->paginate($perPage);
     }
 
     public function listClientUsers(array $filters): LengthAwarePaginator
@@ -144,6 +167,7 @@ class InvoiceService
                 'invoices as overdue_invoices_count' => fn ($query) => $query->where('status', InvoiceStatusEnum::Overdue->value),
             ])
             ->withSum('invoices as invoices_total_amount', 'amount')
+            ->orderByDesc('invoices_count')
             ->orderBy('name')
             ->orderBy('surname')
             ->paginate($perPage);
@@ -211,11 +235,73 @@ class InvoiceService
                 ->update([
                     'status' => InstallmentStatusEnum::Paid->value,
                     'paid_at' => $paidAt,
-                    'paid_amount' => DB::raw('amount'),
+                    'paid_amount' => DB::raw('client_installments.amount'),
                 ]);
 
             return $invoice->fresh(['installments.client', 'paidBy:id,name,surname']);
         }, 3);
+    }
+
+    public function updateStatus(User $clientUser, Invoice $invoice, string $status): Invoice
+    {
+        $this->assertClientUser($clientUser);
+
+        $newStatus = InvoiceStatusEnum::tryFrom($status);
+        if (! $newStatus || $newStatus === InvoiceStatusEnum::Paid) {
+            throw ValidationException::withMessages([
+                'status' => 'Status inválido. Para marcar como paga, utilize a ação "Marcar como paga".',
+            ]);
+        }
+
+        return DB::transaction(function () use ($clientUser, $invoice, $newStatus) {
+            $invoice = Invoice::query()->lockForUpdate()->findOrFail($invoice->id);
+            if ($invoice->user_id !== $clientUser->id) {
+                throw ValidationException::withMessages([
+                    'invoice' => 'A fatura não pertence ao cliente informado.',
+                ]);
+            }
+
+            $data = ['status' => $newStatus];
+
+            if ($invoice->status === InvoiceStatusEnum::Paid) {
+                $data += [
+                    'paid_at' => null,
+                    'paid_by_user_id' => null,
+                    'payment_method' => null,
+                    'payment_reference' => null,
+                ];
+            }
+
+            $invoice->update($data);
+
+            return $invoice->fresh(['installments.client', 'paidBy:id,name,surname']);
+        }, 3);
+    }
+
+    public function uploadPaymentProof(User $user, Invoice $invoice, UploadedFile $file): Invoice
+    {
+        if ($invoice->user_id !== $user->id) {
+            throw ValidationException::withMessages([
+                'invoice' => 'A fatura não pertence a este usuário.',
+            ]);
+        }
+
+        if ($invoice->status === InvoiceStatusEnum::Cancelled) {
+            throw ValidationException::withMessages([
+                'invoice' => 'Não é possível anexar comprovante a uma fatura cancelada.',
+            ]);
+        }
+
+        if ($invoice->payment_proof_path) {
+            Storage::disk('public')->delete($invoice->payment_proof_path);
+        }
+
+        $invoice->update([
+            'payment_proof_path' => $file->store('invoice-proofs', 'public'),
+            'payment_proof_uploaded_at' => now(),
+        ]);
+
+        return $invoice->fresh(['installments.client']);
     }
 
     public function syncOverdueInvoices(): void
