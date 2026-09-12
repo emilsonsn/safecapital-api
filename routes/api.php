@@ -58,9 +58,12 @@ Route::middleware(['jwt'])->group(function () {
     });
 
     Route::middleware(FinancialMiddleware::class)->prefix('admin/finance')->group(function () {
+        Route::post('close', [AdminInvoiceController::class, 'close']);
         Route::get('clients', [AdminInvoiceController::class, 'clients']);
         Route::get('clients/{user}/invoices', [AdminInvoiceController::class, 'invoices']);
         Route::patch('clients/{user}/invoices/{invoice}/mark-as-paid', [AdminInvoiceController::class, 'markAsPaid']);
+        Route::patch('clients/{user}/invoices/{invoice}/status', [AdminInvoiceController::class, 'updateStatus']);
+        Route::post('clients/{user}/invoices/{invoice}/upload-proof', [AdminInvoiceController::class, 'uploadProof']);
 
         Route::get('suppliers', [AdminCashflowController::class, 'suppliers']);
         Route::post('suppliers', [AdminCashflowController::class, 'storeSupplier']);
@@ -156,6 +159,7 @@ Route::middleware(['jwt'])->group(function () {
         });
 
         Route::get('finance/invoices', [InvoiceController::class, 'index']);
+        Route::post('finance/invoices/{invoice}/upload-proof', [InvoiceController::class, 'uploadProof']);
     });
 });
 
