@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminCashflowController;
 use App\Http\Controllers\AdminInvoiceController;
+use App\Http\Controllers\AdminPromotionController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BtgIntegrationController;
 use App\Http\Controllers\ClientController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\FinancialDashboardController;
 use App\Http\Controllers\FinancialReportExportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PolicyTemplateController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\SolicitationController;
 use App\Http\Controllers\TaxSettingController;
 use App\Http\Controllers\TermDocumentController;
@@ -56,6 +58,16 @@ Route::middleware(['jwt'])->group(function () {
         Route::post('refresh', [BtgIntegrationController::class, 'refresh']);
         Route::delete('/', [BtgIntegrationController::class, 'disconnect']);
     });
+
+    Route::middleware(AdminMiddleware::class)->prefix('admin/promotions')->group(function () {
+        Route::get('/', [AdminPromotionController::class, 'index']);
+        Route::post('/', [AdminPromotionController::class, 'store']);
+        Route::patch('reorder', [AdminPromotionController::class, 'reorder']);
+        Route::post('{promotion}', [AdminPromotionController::class, 'update']);
+        Route::delete('{promotion}', [AdminPromotionController::class, 'destroy']);
+    });
+
+    Route::get('promotions', [PromotionController::class, 'index']);
 
     Route::middleware(FinancialMiddleware::class)->prefix('admin/finance')->group(function () {
         Route::post('close', [AdminInvoiceController::class, 'close']);
